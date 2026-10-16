@@ -1895,34 +1895,75 @@
             if (row) row.classList.toggle('hidden');
         }
 
-       function addSubtaskInline(activityId) {
+function addSubtaskInline(activityId) {
             const input = document.getElementById(`new-subtask-input-${activityId}`);
             const text = input ? input.value.trim() : '';
             if (!text) return;
             const act = activities.find(a => a.id === activityId);
-            if (act) {
-                if (!act.subtasks) act.subtasks = [];
-                act.subtasks.push({ text: text, completed: false });
-                renderDashboard();
-                const row = document.getElementById(`detail-row-${activityId}`);
-                if (row) row.classList.remove('hidden');
-                saveActivityToDB(act);
-                showToast("Subtarea añadida");
-                const newInput = document.getElementById(`new-subtask-input-${activityId}`);
-                if (newInput) {
-                    newInput.value = '';
-                    newInput.focus();
-                }
+            if (!act) return;
+
+            if (!act.subtasks) act.subtasks = [];
+            act.subtasks.push({ text: text, completed: false });
+            
+            // 1. Limpiar campo y mantener foco de inmediato
+            input.value = '';
+            input.focus();
+
+            // 2. Insertar visualmente la subtarea en la lista sin recargar la tabla
+            const listContainer = document.getElementById(`subtasks-list-${activityId}`);
+            if (listContainer) {
+                // Si decía "No hay subtareas definidas", lo limpiamos
+                if (listContainer.querySelector('p')) listContainer.innerHTML = '';
+                
+                const sIndex = act.subtasks.length - 1;
+                const newRow = document.createElement('div');
+                newRow.className = 'flex items-center justify-between gap-2 text-xs';
+                newRow.id = `subtask-item-${activityId}-${sIndex}`;
+                newRow.innerHTML = `
+                    <label class="flex items-center space-x-2 cursor-pointer select-none">
+                        <input type="checkbox" onchange="toggleSubtask(${activityId},${sIndex})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                        <span class="text-slate-700 dark:text-slate-300">${text}</span>
+                    </label>
+                    <button onclick="removeSubtaskInline(${activityId},${sIndex})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
+                `;
+                listContainer.appendChild(newRow);
             }
+
+            // 3. Asegurar que la fila de detalles siga abierta
+            const detailRow = document.getElementById(`detail-row-${activityId}`);
+            if (detailRow) detailRow.classList.remove('hidden');
+
+            // 4. Guardar en base de datos
+            saveActivityToDB(act);
+            showToast("Subtarea añadida");
         }
 
         function removeSubtaskInline(activityId, subtaskIndex) {
             const act = activities.find(a => a.id === activityId);
             if (act && act.subtasks) {
                 act.subtasks.splice(subtaskIndex, 1);
-                renderDashboard();
-                const row = document.getElementById(`detail-row-${activityId}`);
-                if (row) row.classList.remove('hidden');
+                
+                // Re-renderizar solo la lista de subtareas
+                const listContainer = document.getElementById(`subtasks-list-${activityId}`);
+                if (listContainer) {
+                    if (act.subtasks.length === 0) {
+                        listContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No hay subtareas definidas.</p>';
+                    } else {
+                        listContainer.innerHTML = act.subtasks.map((st, idx) => `
+                            <div class="flex items-center justify-between gap-2 text-xs" id="subtask-item-${activityId}-${idx}">
+                                <label class="flex items-center space-x-2 cursor-pointer select-none">
+                                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${activityId},${idx})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <span class="${st.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}">${st.text}</span>
+                                </label>
+                                <button onclick="removeSubtaskInline(${activityId},${idx})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        `).join('');
+                    }
+                }
+                
+                const detailRow = document.getElementById(`detail-row-${activityId}`);
+                if (detailRow) detailRow.classList.remove('hidden');
+
                 saveActivityToDB(act);
                 showToast("Subtarea eliminada");
             }
