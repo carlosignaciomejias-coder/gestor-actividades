@@ -1895,19 +1895,24 @@
             if (row) row.classList.toggle('hidden');
         }
 
-        function addSubtaskInline(activityId) {
+       function addSubtaskInline(activityId) {
             const input = document.getElementById(`new-subtask-input-${activityId}`);
-            const text = input.value.trim();
+            const text = input ? input.value.trim() : '';
             if (!text) return;
             const act = activities.find(a => a.id === activityId);
             if (act) {
                 if (!act.subtasks) act.subtasks = [];
                 act.subtasks.push({ text: text, completed: false });
-                input.value = '';
                 renderDashboard();
-                toggleDetailRow(activityId);
+                const row = document.getElementById(`detail-row-${activityId}`);
+                if (row) row.classList.remove('hidden');
                 saveActivityToDB(act);
                 showToast("Subtarea añadida");
+                const newInput = document.getElementById(`new-subtask-input-${activityId}`);
+                if (newInput) {
+                    newInput.value = '';
+                    newInput.focus();
+                }
             }
         }
 
@@ -1916,12 +1921,12 @@
             if (act && act.subtasks) {
                 act.subtasks.splice(subtaskIndex, 1);
                 renderDashboard();
-                toggleDetailRow(activityId);
+                const row = document.getElementById(`detail-row-${activityId}`);
+                if (row) row.classList.remove('hidden');
                 saveActivityToDB(act);
                 showToast("Subtarea eliminada");
             }
         }
-
         function saveDetails(id) {
             const commentText = document.getElementById(`comment-input-${id}`).value.trim();
             const act = activities.find(a => a.id === id);
