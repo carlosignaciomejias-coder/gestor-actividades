@@ -1888,14 +1888,34 @@
                 `;
                 tbody.appendChild(detailTr);
             });
+      // Reabrir automáticamente la fila de detalles si estaba activa
+            if (activeDetailId) {
+                const openRow = document.getElementById(`detail-row-${activeDetailId}`);
+                if (openRow) {
+                    openRow.classList.remove('hidden');
+                    const inp = document.getElementById(`new-subtask-input-${activeDetailId}`);
+                    if (inp) inp.focus();
+                }
+            }
         }
+
+     let activeDetailId = null;
 
         function toggleDetailRow(id) {
             const row = document.getElementById(`detail-row-${id}`);
-            if (row) row.classList.toggle('hidden');
+            if (row) {
+                if (row.classList.contains('hidden')) {
+                    row.classList.remove('hidden');
+                    activeDetailId = id;
+                } else {
+                    row.classList.add('hidden');
+                    if (activeDetailId === id) activeDetailId = null;
+                }
+            }
         }
 
 function addSubtaskInline(activityId) {
+    activeDetailId = activityId;
             const input = document.getElementById(`new-subtask-input-${activityId}`);
             const text = input ? input.value.trim() : '';
             if (!text) return;
