@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Actividades - Carlos</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><path fill=%22%234f46e5%22 d=%22M152 64H360c22.1 0 40 17.9 40 40V408c0 22.1-17.9 40-40 40H152c-22.1 0-40-17.9-40-40V104c0-22.1 17.9-40 40-40zM48 160H80V352H48c-26.5 0-48-21.5-48-48V208c0-26.5 21.5-48 48-48zm416 0h32c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H464V160z%22/></svg>">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -20,33 +22,20 @@
             }
         }
     </script>
+    
+    <!-- Iconos, Fuentes y Librería para Exportar a Excel -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-    
-    <!-- SDKs de Firebase estables para iframes -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
         .post-it-font { font-family: 'Caveat', cursive, sans-serif; }
-        .scrollbar-thin::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.2);
-            border-radius: 9999px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.4);
-        }
-        .post-it-shadow {
-            box-shadow: 2px 4px 12px rgba(0,0,0,0.15);
-        }
+        .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 9999px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
+        .post-it-shadow { box-shadow: 2px 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
@@ -158,6 +147,10 @@
                         <div class="flex items-center space-x-2">
                             <div id="toolbar-btn-today" onclick="filterTodayTasks()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Filtrar tareas de Hoy">
                                 <i class="fa-solid fa-calendar-day text-sm"></i>
+                            </div>
+                            <!-- BOTÓN DESCARGAR EXCEL -->
+                            <div id="toolbar-btn-excel" onclick="exportExcel()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Descargar Plantilla Excel">
+                                <i class="fa-solid fa-file-excel text-sm"></i>
                             </div>
                             <div id="toolbar-btn-export" onclick="exportData()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Exportar Respaldo JSON">
                                 <i class="fa-solid fa-download text-sm"></i>
@@ -379,10 +372,18 @@
                     </h3>
                     <span id="active-count-badge" class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full">0 act.</span>
                 </div>
-                <button onclick="toggleCompletedArchive()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium shadow transition flex items-center space-x-2">
-                    <i class="fa-solid fa-box-archive"></i>
-                    <span id="archive-btn-text">Ver Realizados</span>
-                </button>
+                
+                <div class="flex gap-2">
+                    <!-- BOTÓN RESUMEN DE CATEGORÍAS -->
+                    <button onclick="openCategoryViewer()" class="bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-medium shadow-sm transition flex items-center space-x-2 border border-indigo-200 dark:border-indigo-700">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Resumen Categorías</span>
+                    </button>
+                    <button onclick="toggleCompletedArchive()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium shadow transition flex items-center space-x-2">
+                        <i class="fa-solid fa-box-archive"></i>
+                        <span id="archive-btn-text">Ver Realizados</span>
+                    </button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[850px]">
@@ -409,6 +410,25 @@
 
     </main>
 
+    <!-- MODAL: VISOR DE CATEGORÍAS -->
+    <div id="category-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all border border-slate-200 dark:border-darkBorder my-8">
+            <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Estado General por Categorías</h3>
+                <button onclick="closeCategoryViewer()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Resumen del progreso y estado actual de todas tus áreas de trabajo registradas.</p>
+                <div id="category-stats-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NUEVA ACTIVIDAD -->
     <div id="activity-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
         <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all border border-slate-200 dark:border-darkBorder my-8">
             <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
@@ -546,7 +566,7 @@
             '2027-12-25': 'Navidad'
         };
 
-        const defaultActivities = [
+        let defaultActivities = [
             { id: 1, labor: "CLASES", actividad: "ENTREGA 2 - MODULO II", deadline: "16-Oct", semana: 42, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
             { id: 2, labor: "CLASES", actividad: "INFORME FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
             { id: 3, labor: "CLASES", actividad: "PRESENTACIÓN FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
@@ -595,40 +615,47 @@
             { id: 46, labor: "SGV VCM", actividad: "Encuesta EX POST", deadline: "13-Nov", semana: 46, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] }
         ];
 
-        const defaultStickyNotes = [
+        let defaultStickyNotes = [
             { id: 1, text: "Revisar bibliografía de biomimética antes del viernes.", color: "bg-amber-200 text-slate-900" },
             { id: 2, text: "Contactar a Paula Álvarez sobre caniles 2027.", color: "bg-yellow-200 text-slate-900" },
             { id: 3, text: "Preparar presentación para entropía educativa.", color: "bg-lime-200 text-slate-900" }
         ];
 
-        // Inicialización inmediata para que nunca se vea vacío
         let activities = [...defaultActivities];
         let stickyNotes = [...defaultStickyNotes];
 
-        let db = null;
-        const appId = "dashboard-carolo";
-        const userId = "carlos_principal";
+        // Firebase
+        let db, auth, userId, setDoc, doc, deleteDoc, collection, onSnapshot, writeBatch;
 
         window.addEventListener('DOMContentLoaded', () => {
-            // 1. Render inicial inmediato (Cero retrasos ni pantalla vacía)
-            updateDigitalClock();
-            setInterval(updateDigitalClock, 1000);
-            updateHeaderDate();
             populateFilters();
             renderDashboard();
             renderStickyNotes();
-
-            // 2. Conectar a Firestore de forma segura
-            initFirebaseDirect();
+            updateHeaderDate();
+            setInterval(updateDigitalClock, 1000);
+            updateDigitalClock();
+            initFirebase();
+            
+            window.addEventListener('click', function(e) {
+                if (!e.target.closest('.relative')) {
+                    document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
+                }
+            });
         });
 
-        function initFirebaseDirect() {
+        async function initFirebase() {
             try {
-                if (typeof firebase === 'undefined') {
-                    console.warn("Firebase SDK no cargó por la red, operando en modo local");
-                    return;
-                }
-
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const firestore = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                
+                setDoc = firestore.setDoc;
+                doc = firestore.doc;
+                deleteDoc = firestore.deleteDoc;
+                collection = firestore.collection;
+                onSnapshot = firestore.onSnapshot;
+                writeBatch = firestore.writeBatch;
+                
                 const firebaseConfig = {
                     apiKey: "AIzaSyBbtVeGSyPhu0Y_fo45BJkZRzUEibUvuKk",
                     authDomain: "dashboard-carolo.firebaseapp.com",
@@ -637,93 +664,86 @@
                     messagingSenderId: "751156790806",
                     appId: "1:751156790806:web:a693c1a686278841395737"
                 };
-
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                db = firebase.firestore();
-
-                setupRealtimeListeners();
+                
+                const appId = "dashboard-carolo";
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = firestore.getFirestore(app);
+                
+                await signInAnonymously(auth);
+                userId = auth.currentUser?.uid || "carlos_user";
+                
+                setupRealtimeListeners(appId);
             } catch (e) {
-                console.warn("Error iniciando Firestore:", e);
+                console.warn("Iniciando en modo local (Firebase falló)", e);
             }
         }
 
-        function setupRealtimeListeners() {
-            if (!db) return;
-
-            // Escuchar actividades
-            const actsRef = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('activities');
-            actsRef.onSnapshot((snapshot) => {
+        function setupRealtimeListeners(appId) {
+            const actsRef = collection(db, 'artifacts', appId, 'users', userId, 'activities');
+            onSnapshot(actsRef, async (snapshot) => {
                 if (snapshot.empty && !window.hasMigratedActs) {
                     window.hasMigratedActs = true;
-                    const batch = db.batch();
-                    activities.forEach(act => {
-                        const dRef = actsRef.doc(String(act.id));
+                    const batch = writeBatch(db);
+                    defaultActivities.forEach(act => {
+                        const dRef = doc(db, 'artifacts', appId, 'users', userId, 'activities', String(act.id));
                         batch.set(dRef, act);
                     });
-                    batch.commit().catch(e => console.warn("Error sembrando actividades:", e));
+                    await batch.commit();
                 } else if (!snapshot.empty) {
-                    const cloudActs = [];
-                    snapshot.forEach(d => cloudActs.push(d.data()));
-                    cloudActs.sort((a,b) => a.id - b.id);
-                    activities = cloudActs;
+                    activities = [];
+                    snapshot.forEach(d => activities.push(d.data()));
+                    activities.sort((a,b) => a.id - b.id);
                     populateFilters();
                     renderDashboard();
                 }
-            }, (error) => console.warn("Sync actividades:", error));
+            }, (error) => console.error("Error syncing activities", error));
 
-            // Escuchar notas adhesivas
-            const notesRef = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('stickyNotes');
-            notesRef.onSnapshot((snapshot) => {
+            const notesRef = collection(db, 'artifacts', appId, 'users', userId, 'stickyNotes');
+            onSnapshot(notesRef, async (snapshot) => {
                 if (snapshot.empty && !window.hasMigratedNotes) {
                     window.hasMigratedNotes = true;
-                    const batch = db.batch();
-                    stickyNotes.forEach(note => {
-                        const dRef = notesRef.doc(String(note.id));
+                    const batch = writeBatch(db);
+                    defaultStickyNotes.forEach(note => {
+                        const dRef = doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(note.id));
                         batch.set(dRef, note);
                     });
-                    batch.commit().catch(e => console.warn("Error sembrando notas:", e));
+                    await batch.commit();
                 } else if (!snapshot.empty) {
-                    const cloudNotes = [];
-                    snapshot.forEach(d => cloudNotes.push(d.data()));
-                    cloudNotes.sort((a,b) => a.id - b.id);
-                    stickyNotes = cloudNotes;
+                    stickyNotes = [];
+                    snapshot.forEach(d => stickyNotes.push(d.data()));
+                    stickyNotes.sort((a,b) => a.id - b.id);
                     renderStickyNotes();
                 }
-            }, (error) => console.warn("Sync notas:", error));
+            }, (error) => console.error("Error syncing notes", error));
         }
 
         async function saveActivityToDB(act) {
-            if (!db) return;
-            try { 
-                await db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('activities').doc(String(act.id)).set(act); 
-            } catch(e) {
-                console.warn("Error al guardar actividad:", e);
-            }
+            if (!userId || !db) return;
+            const appId = "dashboard-carolo";
+            try { await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'activities', String(act.id)), act); } 
+            catch(e) { console.error(e); }
         }
 
         async function deleteActivityFromDB(id) {
-            if (!db) return;
-            try { 
-                await db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('activities').doc(String(id)).delete(); 
-            } catch(e) {}
+            if (!userId || !db) return;
+            const appId = "dashboard-carolo";
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'activities', String(id))); } 
+            catch(e) { console.error(e); }
         }
 
         async function saveNoteToDB(note) {
-            if (!db) return;
-            try { 
-                await db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('stickyNotes').doc(String(note.id)).set(note); 
-            } catch(e) {
-                console.warn("Error al guardar nota:", e);
-            }
+            if (!userId || !db) return;
+            const appId = "dashboard-carolo";
+            try { await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(note.id)), note); } 
+            catch(e) { console.error(e); }
         }
 
         async function deleteNoteFromDB(id) {
-            if (!db) return;
-            try { 
-                await db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('stickyNotes').doc(String(id)).delete(); 
-            } catch(e) {}
+            if (!userId || !db) return;
+            const appId = "dashboard-carolo";
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(id))); } 
+            catch(e) { console.error(e); }
         }
 
         let currentTimelineLevel = 'months';
@@ -796,6 +816,7 @@
             const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
             document.getElementById('header-date-display').textContent = `Hoy es ${capitalizedDate} (2026-2027)`;
             document.getElementById('current-date-badge').textContent = capitalizedDate;
+            
             updateTodayWorkloadBox(now);
             renderUrgentWidget();
             renderOverdueWidget();
@@ -1587,6 +1608,53 @@
             showToast("Respaldo exportado con éxito");
         }
 
+        /* ====== FUNCIÓN EXPORTAR EXCEL ====== */
+        function exportExcel() {
+            if (typeof XLSX === 'undefined') {
+                showToast("La librería para Excel aún está cargando. Intenta en unos segundos.", "rose");
+                return;
+            }
+            
+            // Creamos un formato limpio de los datos
+            const dataToExport = activities.map(a => ({
+                "ID": a.id,
+                "Categoría": a.labor,
+                "Actividad": a.actividad,
+                "Deadline": a.deadline,
+                "Mes": a.mes,
+                "Año": a.anio,
+                "Semana": a.semana,
+                "Estado": a.estado,
+                "Responsable": a.responsable,
+                "Notas / Comentarios": a.comentarios
+            }));
+
+            // Convertimos los datos en una hoja de Excel
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            
+            // Ajustar el ancho de las columnas automáticamente para que se vea limpio
+            const wscols = [
+                {wch: 5},   // ID
+                {wch: 25},  // Categoría
+                {wch: 45},  // Actividad
+                {wch: 12},  // Deadline
+                {wch: 12},  // Mes
+                {wch: 8},   // Año
+                {wch: 8},   // Semana
+                {wch: 18},  // Estado
+                {wch: 15},  // Responsable
+                {wch: 40}   // Notas
+            ];
+            worksheet['!cols'] = wscols;
+
+            // Creamos el libro y forzamos la descarga
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Mis Actividades");
+            XLSX.writeFile(workbook, "Dashboard_Actividades_Carlos.xlsx");
+            
+            showToast("Plantilla Excel exportada con éxito", "emerald");
+        }
+
         function triggerImport() {
             document.getElementById('import-file-input').click();
         }
@@ -1595,31 +1663,15 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
                     if (parsed.activities) activities = parsed.activities;
                     if (parsed.stickyNotes) stickyNotes = parsed.stickyNotes;
-                    
-                    if (db) {
-                        try {
-                            const batch = db.batch();
-                            activities.forEach(act => {
-                                const dRef = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('activities').doc(String(act.id));
-                                batch.set(dRef, act);
-                            });
-                            stickyNotes.forEach(note => {
-                                const dRef = db.collection('artifacts').doc(appId).collection('users').doc(userId).collection('stickyNotes').doc(String(note.id));
-                                batch.set(dRef, note);
-                            });
-                            await batch.commit();
-                        } catch(err) {}
-                    }
-
                     populateFilters();
                     renderDashboard();
                     renderStickyNotes();
-                    showToast("Datos importados y guardados con éxito", "emerald");
+                    showToast("Datos importados con éxito", "emerald");
                 } catch(err) {
                     showToast("Error al importar el archivo JSON", "rose");
                 }
@@ -1702,8 +1754,8 @@
                 const matchSearch = a.actividad.toLowerCase().includes(search) || 
                                     a.responsable.toLowerCase().includes(search) || 
                                     a.labor.toLowerCase().includes(search) || 
-                                    a.deadline.toLowerCase().includes(search) || 
-                                    (a.comentarios && a.comentarios.toLowerCase().includes(search)) || 
+                                    a.deadline.toLowerCase().includes(search) ||
+                                    (a.comentarios && a.comentarios.toLowerCase().includes(search)) ||
                                     matchSubtasks;
 
                 const matchLabor = selectedLabores.length === 0 || selectedLabores.includes(a.labor);
@@ -1861,10 +1913,10 @@
                                     ${item.subtasks && item.subtasks.length > 0 ? item.subtasks.map((st, sIndex) => `
                                         <div class="flex items-center justify-between gap-2 text-xs">
                                             <label class="flex items-center space-x-2 cursor-pointer select-none">
-                                                <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${item.id},${sIndex})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                                <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${item.id}, ${sIndex})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
                                                 <span class="${st.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}">${st.text}</span>
                                             </label>
-                                            <button onclick="removeSubtaskInline(${item.id},${sIndex})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
+                                            <button onclick="removeSubtaskInline(${item.id}, ${sIndex})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
                                         </div>
                                     `).join('') : '<p class="text-xs text-slate-400 italic">No hay subtareas definidas.</p>'}
                                 </div>
@@ -1888,106 +1940,89 @@
                 `;
                 tbody.appendChild(detailTr);
             });
-      // Reabrir automáticamente la fila de detalles si estaba activa
-            if (activeDetailId) {
-                const openRow = document.getElementById(`detail-row-${activeDetailId}`);
-                if (openRow) {
-                    openRow.classList.remove('hidden');
-                    const inp = document.getElementById(`new-subtask-input-${activeDetailId}`);
-                    if (inp) inp.focus();
-                }
-            }
         }
-
-     let activeDetailId = null;
 
         function toggleDetailRow(id) {
             const row = document.getElementById(`detail-row-${id}`);
-            if (row) {
-                if (row.classList.contains('hidden')) {
-                    row.classList.remove('hidden');
-                    activeDetailId = id;
-                } else {
-                    row.classList.add('hidden');
-                    if (activeDetailId === id) activeDetailId = null;
-                }
-            }
+            if (row) row.classList.toggle('hidden');
         }
 
-function addSubtaskInline(activityId) {
-    activeDetailId = activityId;
+        /* ====== NUEVA FUNCIÓN: VISOR DE CATEGORÍAS ====== */
+        function openCategoryViewer() {
+            const container = document.getElementById('category-stats-container');
+            container.innerHTML = '';
+            
+            // Agrupar actividades por labor (Categoría)
+            const stats = {};
+            activities.forEach(a => {
+                if (!stats[a.labor]) {
+                    stats[a.labor] = { total: 0, completadas: 0, pendientes: 0, atrasadas: 0 };
+                }
+                stats[a.labor].total++;
+                if (a.estado === 'COMPLETADO') stats[a.labor].completadas++;
+                else if (a.estado === 'ATRASADO') stats[a.labor].atrasadas++;
+                else stats[a.labor].pendientes++;
+            });
+
+            // Generar tarjetas de resumen por categoría
+            Object.keys(stats).sort().forEach(cat => {
+                const data = stats[cat];
+                const percent = data.total === 0 ? 0 : Math.round((data.completadas / data.total) * 100);
+                
+                const div = document.createElement('div');
+                div.className = 'bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-darkBorder rounded-xl p-4 shadow-sm hover:border-indigo-300 transition-colors';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm truncate pr-2" title="${cat}">${cat}</h4>
+                        <span class="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">${percent}% Listo</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-3">
+                        <div class="bg-indigo-600 dark:bg-indigo-500 h-full transition-all duration-300" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1" title="Completadas"><span class="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></span> ${data.completadas}</span>
+                        <span class="flex items-center gap-1" title="Pendientes/En Desarrollo"><span class="w-2 h-2 rounded-full bg-amber-500 shadow-sm"></span> ${data.pendientes}</span>
+                        <span class="flex items-center gap-1" title="Atrasadas"><span class="w-2 h-2 rounded-full bg-rose-500 shadow-sm"></span> ${data.atrasadas}</span>
+                        <span class="flex items-center gap-1 border-l pl-2 border-slate-300 dark:border-slate-600" title="Total"><strong>${data.total}</strong> Tot</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('category-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryViewer() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        function addSubtaskInline(activityId) {
             const input = document.getElementById(`new-subtask-input-${activityId}`);
-            const text = input ? input.value.trim() : '';
+            const text = input.value.trim();
             if (!text) return;
             const act = activities.find(a => a.id === activityId);
-            if (!act) return;
-
-            if (!act.subtasks) act.subtasks = [];
-            act.subtasks.push({ text: text, completed: false });
-            
-            // 1. Limpiar campo y mantener foco de inmediato
-            input.value = '';
-            input.focus();
-
-            // 2. Insertar visualmente la subtarea en la lista sin recargar la tabla
-            const listContainer = document.getElementById(`subtasks-list-${activityId}`);
-            if (listContainer) {
-                // Si decía "No hay subtareas definidas", lo limpiamos
-                if (listContainer.querySelector('p')) listContainer.innerHTML = '';
-                
-                const sIndex = act.subtasks.length - 1;
-                const newRow = document.createElement('div');
-                newRow.className = 'flex items-center justify-between gap-2 text-xs';
-                newRow.id = `subtask-item-${activityId}-${sIndex}`;
-                newRow.innerHTML = `
-                    <label class="flex items-center space-x-2 cursor-pointer select-none">
-                        <input type="checkbox" onchange="toggleSubtask(${activityId},${sIndex})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                        <span class="text-slate-700 dark:text-slate-300">${text}</span>
-                    </label>
-                    <button onclick="removeSubtaskInline(${activityId},${sIndex})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
-                `;
-                listContainer.appendChild(newRow);
+            if (act) {
+                if (!act.subtasks) act.subtasks = [];
+                act.subtasks.push({ text: text, completed: false });
+                input.value = '';
+                renderDashboard();
+                toggleDetailRow(activityId);
+                saveActivityToDB(act);
+                showToast("Subtarea añadida");
             }
-
-            // 3. Asegurar que la fila de detalles siga abierta
-            const detailRow = document.getElementById(`detail-row-${activityId}`);
-            if (detailRow) detailRow.classList.remove('hidden');
-
-            // 4. Guardar en base de datos
-            saveActivityToDB(act);
-            showToast("Subtarea añadida");
         }
 
         function removeSubtaskInline(activityId, subtaskIndex) {
             const act = activities.find(a => a.id === activityId);
             if (act && act.subtasks) {
                 act.subtasks.splice(subtaskIndex, 1);
-                
-                // Re-renderizar solo la lista de subtareas
-                const listContainer = document.getElementById(`subtasks-list-${activityId}`);
-                if (listContainer) {
-                    if (act.subtasks.length === 0) {
-                        listContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No hay subtareas definidas.</p>';
-                    } else {
-                        listContainer.innerHTML = act.subtasks.map((st, idx) => `
-                            <div class="flex items-center justify-between gap-2 text-xs" id="subtask-item-${activityId}-${idx}">
-                                <label class="flex items-center space-x-2 cursor-pointer select-none">
-                                    <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${activityId},${idx})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                    <span class="${st.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}">${st.text}</span>
-                                </label>
-                                <button onclick="removeSubtaskInline(${activityId},${idx})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        `).join('');
-                    }
-                }
-                
-                const detailRow = document.getElementById(`detail-row-${activityId}`);
-                if (detailRow) detailRow.classList.remove('hidden');
-
+                renderDashboard();
+                toggleDetailRow(activityId);
                 saveActivityToDB(act);
                 showToast("Subtarea eliminada");
             }
         }
+
         function saveDetails(id) {
             const commentText = document.getElementById(`comment-input-${id}`).value.trim();
             const act = activities.find(a => a.id === id);
