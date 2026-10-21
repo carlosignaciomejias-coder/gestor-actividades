@@ -95,7 +95,7 @@
 
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-6 flex-grow w-full space-y-6">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div id="urgent-widget" class="bg-gradient-to-br from-amber-500/10 via-rose-500/15 to-indigo-500/10 dark:from-amber-950/40 dark:via-rose-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-amber-300/70 dark:border-amber-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-amber-500 to-rose-500 text-white p-3 rounded-2xl shadow-md flex-shrink-0 animate-pulse">
@@ -106,10 +106,27 @@
                             <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300">Próximo Vencimiento</h2>
                             <span id="current-date-badge" class="bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm"></span>
                         </div>
-                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Deadline más cercano requiriendo atención.</p>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Tareas requiriendo atención urgente.</p>
                     </div>
                 </div>
                 <div id="urgent-tasks-container" class="w-full"></div>
+            </div>
+
+            <!-- NUEVO VISOR DE EVENTOS -->
+            <div id="events-widget" class="bg-gradient-to-br from-sky-500/10 via-blue-500/15 to-indigo-500/10 dark:from-sky-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-sky-300/70 dark:border-sky-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
+                <div class="flex items-start sm:items-center space-x-3">
+                    <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
+                        <i class="fa-solid fa-calendar-day text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2 id="events-widget-title" class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-900 dark:text-sky-300">Eventos de Hoy</h2>
+                            <span id="events-count-badge" class="bg-sky-200/80 dark:bg-sky-900/80 text-sky-900 dark:text-sky-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">0</span>
+                        </div>
+                        <p id="events-widget-desc" class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Eventos programados para la jornada.</p>
+                    </div>
+                </div>
+                <div id="events-tasks-container" class="w-full"></div>
             </div>
 
             <div id="overdue-widget" class="bg-gradient-to-br from-rose-500/10 via-rose-600/15 to-slate-500/10 dark:from-rose-950/40 dark:via-rose-900/40 dark:to-slate-950/40 p-4 sm:p-5 rounded-2xl border border-rose-300/70 dark:border-rose-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
@@ -122,7 +139,7 @@
                             <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-rose-900 dark:text-rose-300">Actividades Atrasadas</h2>
                             <span id="overdue-count-badge" class="bg-rose-200/80 dark:bg-rose-900/80 text-rose-900 dark:text-rose-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">0</span>
                         </div>
-                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Tareas cuya fecha límite ya pasó sin completarse.</p>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Actividades cuya fecha ya pasó.</p>
                     </div>
                 </div>
                 <div id="overdue-tasks-container" class="w-full"></div>
@@ -148,7 +165,6 @@
                             <div id="toolbar-btn-today" onclick="filterTodayTasks()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Filtrar tareas de Hoy">
                                 <i class="fa-solid fa-calendar-day text-sm"></i>
                             </div>
-                            <!-- BOTÓN DESCARGAR EXCEL -->
                             <div id="toolbar-btn-excel" onclick="exportExcel()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Descargar Plantilla Excel">
                                 <i class="fa-solid fa-file-excel text-sm"></i>
                             </div>
@@ -374,7 +390,6 @@
                 </div>
                 
                 <div class="flex gap-2">
-                    <!-- BOTÓN RESUMEN DE CATEGORÍAS -->
                     <button onclick="openCategoryViewer()" class="bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-medium shadow-sm transition flex items-center space-x-2 border border-indigo-200 dark:border-indigo-700">
                         <i class="fa-solid fa-chart-pie"></i>
                         <span>Resumen Categorías</span>
@@ -421,14 +436,12 @@
             </div>
             <div class="p-6">
                 <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Resumen del progreso y estado actual de todas tus áreas de trabajo registradas.</p>
-                <div id="category-stats-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin">
-                    <!-- Inyectado por JS -->
-                </div>
+                <div id="category-stats-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: NUEVA ACTIVIDAD -->
+    <!-- FORMULARIO DE ACTIVIDAD -->
     <div id="activity-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
         <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all border border-slate-200 dark:border-darkBorder my-8">
             <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
@@ -439,14 +452,32 @@
             </div>
             <form id="activity-form" onsubmit="saveActivity(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
                 <input type="hidden" id="activity-id">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Categoría</label>
-                    <input type="text" id="form-labor" required placeholder="Ej. CLASES, DOCTORADO..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Categoría</label>
+                        <input type="text" id="form-labor" required placeholder="Ej. CLASES, DOCTORADO..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Descripción de la Actividad</label>
+                        <input type="text" id="form-actividad" required placeholder="Ej. Entrega Informe Final..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Descripción de la Actividad</label>
-                    <input type="text" id="form-actividad" required placeholder="Ej. Entrega Informe Final..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Tipo</label>
+                        <select id="form-tipo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="TAREA">Tarea</option>
+                            <option value="EVENTO">Evento</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Hora (Opcional)</label>
+                        <input type="time" id="form-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
                 </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Fecha Deadline</label>
@@ -820,6 +851,7 @@
             updateTodayWorkloadBox(now);
             renderUrgentWidget();
             renderOverdueWidget();
+            renderEventsWidget();
         }
 
         function updateTodayWorkloadBox(todayDate) {
@@ -904,10 +936,11 @@
         function renderUrgentWidget() {
             const container = document.getElementById('urgent-tasks-container');
             container.innerHTML = '';
-            const activePendings = activities.filter(a => a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO');
+            // Excluimos explícitamente eventos para este widget (solo TAREAS)
+            const activePendings = activities.filter(a => (a.tipo === 'TAREA' || !a.tipo) && (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO'));
             if (activePendings.length === 0) {
                 currentUrgentData = null;
-                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-amber-200/50 dark:border-amber-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No hay actividades pendientes. ¡Todo al día!</div>`;
+                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-amber-200/50 dark:border-amber-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No hay tareas urgentes pendientes.</div>`;
                 return;
             }
             const parsed = activePendings.map(a => ({ ...a, dateObj: parseActivityDate(a) }));
@@ -944,6 +977,72 @@
                             <div class="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-darkBorder">
                                 <span class="font-medium truncate">• ${t.actividad}</span> 
                                 <span class="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 flex-shrink-0">${t.labor}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ====== NUEVO WIDGET: VISOR DE EVENTOS ====== */
+        function renderEventsWidget() {
+            const container = document.getElementById('events-tasks-container');
+            const titleEl = document.getElementById('events-widget-title');
+            const descEl = document.getElementById('events-widget-desc');
+            const countBadge = document.getElementById('events-count-badge');
+            
+            container.innerHTML = '';
+            
+            // Filtramos solo EVENTOS no completados
+            const activeEvents = activities.filter(a => a.tipo === 'EVENTO' && a.estado !== 'COMPLETADO');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const parsedEvents = activeEvents.map(a => ({ ...a, dateObj: parseActivityDate(a) }));
+            parsedEvents.sort((a, b) => a.dateObj - b.dateObj);
+
+            let displayEvents = parsedEvents.filter(e => e.dateObj.getTime() === today.getTime());
+            let isToday = true;
+
+            // Si no hay para hoy, buscamos los siguientes
+            if (displayEvents.length === 0) {
+                isToday = false;
+                const futureEvents = parsedEvents.filter(e => e.dateObj > today);
+                if (futureEvents.length > 0) {
+                    const closestDateObj = futureEvents[0].dateObj;
+                    displayEvents = futureEvents.filter(e => e.dateObj.getTime() === closestDateObj.getTime());
+                }
+            }
+
+            countBadge.textContent = displayEvents.length;
+
+            if (displayEvents.length === 0) {
+                titleEl.textContent = "Eventos Activos";
+                descEl.textContent = "No hay eventos pendientes agendados.";
+                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-sky-200/50 dark:border-sky-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No tienes eventos registrados.</div>`;
+                return;
+            }
+
+            titleEl.textContent = isToday ? "Eventos de Hoy" : "Próximos Eventos";
+            descEl.textContent = isToday ? "Tus eventos programados para la jornada." : "No hay eventos hoy. Próximos en agenda:";
+
+            container.innerHTML = `
+                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-sky-200 dark:border-sky-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-sky-400 transition cursor-pointer" onclick="filterByDate('${displayEvents[0].deadline}')" title="Haz clic para filtrar en la tabla">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-1.5">
+                        <span class="font-bold text-sky-600 dark:text-sky-400 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check"></i> ${displayEvents[0].deadline} (${displayEvents[0].anio || displayEvents[0].dateObj.getFullYear()})
+                        </span>
+                    </div>
+                    <div class="space-y-1.5 max-h-[140px] overflow-y-auto scrollbar-thin">
+                        ${displayEvents.map(e => `
+                            <div class="flex flex-col gap-1 text-slate-700 dark:text-slate-300 bg-sky-50/50 dark:bg-sky-950/20 px-2.5 py-1.5 rounded-lg border border-sky-100 dark:border-sky-900/40">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-medium truncate flex-1 flex items-center gap-1"><i class="fa-solid fa-calendar-check text-sky-500"></i> ${e.actividad}</span>
+                                    ${e.hora ? `<span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-1 rounded border border-slate-200 dark:border-slate-700 flex-shrink-0 whitespace-nowrap"><i class="fa-regular fa-clock"></i> ${e.hora}</span>` : ''}
+                                </div>
+                                <div class="flex justify-end mt-0.5">
+                                    <span class="text-[8px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 uppercase">${e.labor}</span>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -1215,6 +1314,7 @@
             filterActivities();
             renderUrgentWidget();
             renderOverdueWidget();
+            renderEventsWidget(); // <-- Llamada al nuevo widget
         }
 
         function updateKPIs() {
@@ -1608,19 +1708,19 @@
             showToast("Respaldo exportado con éxito");
         }
 
-        /* ====== FUNCIÓN EXPORTAR EXCEL ====== */
         function exportExcel() {
             if (typeof XLSX === 'undefined') {
                 showToast("La librería para Excel aún está cargando. Intenta en unos segundos.", "rose");
                 return;
             }
             
-            // Creamos un formato limpio de los datos
             const dataToExport = activities.map(a => ({
                 "ID": a.id,
+                "Tipo": a.tipo || 'TAREA',
                 "Categoría": a.labor,
                 "Actividad": a.actividad,
                 "Deadline": a.deadline,
+                "Hora": a.hora || 'Sin hora',
                 "Mes": a.mes,
                 "Año": a.anio,
                 "Semana": a.semana,
@@ -1629,15 +1729,15 @@
                 "Notas / Comentarios": a.comentarios
             }));
 
-            // Convertimos los datos en una hoja de Excel
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             
-            // Ajustar el ancho de las columnas automáticamente para que se vea limpio
             const wscols = [
                 {wch: 5},   // ID
+                {wch: 10},  // Tipo
                 {wch: 25},  // Categoría
                 {wch: 45},  // Actividad
                 {wch: 12},  // Deadline
+                {wch: 10},  // Hora
                 {wch: 12},  // Mes
                 {wch: 8},   // Año
                 {wch: 8},   // Semana
@@ -1647,7 +1747,6 @@
             ];
             worksheet['!cols'] = wscols;
 
-            // Creamos el libro y forzamos la descarga
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Mis Actividades");
             XLSX.writeFile(workbook, "Dashboard_Actividades_Carlos.xlsx");
@@ -1830,6 +1929,10 @@
                 const prog = getSubtaskProgress(item);
                 const dateRangeStr = getWeekDates(item.anio || 2026, item.semana);
 
+                const isEvento = item.tipo === 'EVENTO';
+                const tipoIcon = isEvento ? '<i class="fa-solid fa-calendar-check text-amber-500 mt-1" title="Evento"></i>' : '<i class="fa-solid fa-check-square text-indigo-500 mt-1" title="Tarea"></i>';
+                const horaDisplay = item.hora ? `<div class="mt-1 text-[11px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded inline-block"><i class="fa-regular fa-clock"></i> ${item.hora}</div>` : '';
+
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-darkBorder last:border-none';
                 tr.innerHTML = `
@@ -1838,9 +1941,12 @@
                     </td>
                     <td class="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 align-top">
                         <div class="space-y-1.5">
-                            <span onclick="inlineEditActivityName(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition block font-medium" title="Haz clic para editar actividad">${item.actividad}</span>
+                            <div class="flex items-start gap-2">
+                                ${tipoIcon}
+                                <span onclick="inlineEditActivityName(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition block font-medium" title="Haz clic para editar actividad">${item.actividad}</span>
+                            </div>
                             ${prog ? `
-                                <div class="space-y-1 pt-1">
+                                <div class="space-y-1 pt-1 ml-5">
                                     <div class="flex justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                         <span>Subtareas (${prog.completed}/${prog.total})</span>
                                         <span>${prog.percent}%</span>
@@ -1857,7 +1963,8 @@
                             <input type="date" onchange="inlineUpdateDeadlineDate(${item.id}, this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" title="Cambiar fecha deadline">
                             <span class="font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition pointer-events-none">${item.deadline} (${item.anio || 2026})</span>
                             <i class="fa-solid fa-calendar-days text-slate-400 group-hover:text-indigo-600 text-[11px] pointer-events-none"></i>
-                        </div>
+                        </div><br>
+                        ${horaDisplay}
                     </td>
                     <td class="py-3.5 px-4 text-center align-top">
                         <div class="inline-flex flex-col items-center bg-indigo-50/80 dark:bg-indigo-950/50 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
@@ -1947,12 +2054,9 @@
             if (row) row.classList.toggle('hidden');
         }
 
-        /* ====== NUEVA FUNCIÓN: VISOR DE CATEGORÍAS ====== */
         function openCategoryViewer() {
             const container = document.getElementById('category-stats-container');
             container.innerHTML = '';
-            
-            // Agrupar actividades por labor (Categoría)
             const stats = {};
             activities.forEach(a => {
                 if (!stats[a.labor]) {
@@ -1964,7 +2068,6 @@
                 else stats[a.labor].pendientes++;
             });
 
-            // Generar tarjetas de resumen por categoría
             Object.keys(stats).sort().forEach(cat => {
                 const data = stats[cat];
                 const percent = data.total === 0 ? 0 : Math.round((data.completadas / data.total) * 100);
@@ -2135,6 +2238,8 @@
                 document.getElementById('form-labor').value = act.labor;
                 document.getElementById('form-actividad').value = act.actividad;
                 document.getElementById('form-deadline').value = act.deadline;
+                document.getElementById('form-hora').value = act.hora || '';
+                document.getElementById('form-tipo').value = act.tipo || 'TAREA';
                 document.getElementById('form-comentarios').value = act.comentarios || '';
                 
                 if (act.subtasks && act.subtasks.length > 0) {
@@ -2165,6 +2270,8 @@
                 document.getElementById('activity-id').value = '';
                 document.getElementById('form-deadline-date').value = '';
                 document.getElementById('form-deadline').value = '';
+                document.getElementById('form-hora').value = '';
+                document.getElementById('form-tipo').value = 'TAREA';
                 document.getElementById('form-semana').value = '';
                 document.getElementById('form-comentarios').value = '';
             }
@@ -2179,6 +2286,8 @@
             const id = document.getElementById('activity-id').value;
             const labor = document.getElementById('form-labor').value.trim();
             const actividad = document.getElementById('form-actividad').value.trim();
+            const hora = document.getElementById('form-hora').value;
+            const tipo = document.getElementById('form-tipo').value;
             let deadline = document.getElementById('form-deadline').value.trim();
             const comentarios = document.getElementById('form-comentarios').value.trim();
             
@@ -2229,13 +2338,13 @@
             if (id) {
                 const index = activities.findIndex(a => a.id == id);
                 if (index !== -1) {
-                    activities[index] = { ...activities[index], labor, actividad, deadline, semana, estado, responsable, comentarios, mes, anio, subtasks };
+                    activities[index] = { ...activities[index], labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks };
                     saveActivityToDB(activities[index]);
                     showToast("Actividad actualizada correctamente");
                 }
             } else {
                 const newId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
-                const newAct = { id: newId, labor, actividad, deadline, semana, estado, responsable, comentarios, mes, anio, subtasks };
+                const newAct = { id: newId, labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks };
                 activities.push(newAct);
                 saveActivityToDB(newAct);
                 showToast("Actividad creada con éxito");
