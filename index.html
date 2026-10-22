@@ -750,6 +750,12 @@
             }, (error) => console.error("Error syncing notes", error));
         }
 
+        function initLocal() {
+            populateFilters();
+            renderDashboard();
+            renderStickyNotes();
+        }
+
         async function saveActivityToDB(act) {
             if (!userId || !db) return;
             const appId = "dashboard-carolo";
@@ -776,12 +782,6 @@
             const appId = "dashboard-carolo";
             try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(id))); } 
             catch(e) { console.error(e); }
-        }
-
-        function initLocal() {
-            populateFilters();
-            renderDashboard();
-            renderStickyNotes();
         }
 
         let currentTimelineLevel = 'months';
@@ -815,6 +815,7 @@
 
         function parseActivityDate(a) {
             try {
+                if (!a || !a.deadline) return new Date(a?.anio || 2026, 9, 1);
                 const monthsMapInv = {
                     'jan': 0, 'ene': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'abr': 3,
                     'may': 4, 'jun': 5, 'jul': 6, 'aug': 7, 'ago': 7,
@@ -912,6 +913,7 @@
         }
 
         function formatDetailedTime(diffMs) {
+            if (isNaN(diffMs)) return "Vence hoy";
             let totalSecs = Math.floor(Math.abs(diffMs) / 1000);
             const years = Math.floor(totalSecs / (365 * 24 * 3600));
             totalSecs %= (365 * 24 * 3600);
@@ -943,8 +945,9 @@
         function renderUrgentWidget() {
             const container = document.getElementById('urgent-tasks-container');
             container.innerHTML = '';
-            // Excluimos explícitamente eventos para este widget (solo TAREAS)
-            const activePendings = activities.filter(a => (a.tipo === 'TAREA' || !a.tipo) && (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO'));
+            
+            const activePendings = activities.filter(a => ((a.tipo || 'TAREA') === 'TAREA') && (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO'));
+            
             if (activePendings.length === 0) {
                 currentUrgentData = null;
                 container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-amber-200/50 dark:border-amber-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No hay tareas urgentes pendientes.</div>`;
@@ -982,8 +985,8 @@
                     <div class="space-y-1">
                         ${currentUrgentData.closestTasks.map(t => `
                             <div class="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-darkBorder">
-                                <span class="font-medium truncate">• ${t.actividad}</span> 
-                                <span class="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 flex-shrink-0">${t.labor}</span>
+                                <span class="font-medium truncate">• ${t.actividad || 'Sin nombre'}</span> 
+                                <span class="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 flex-shrink-0">${t.labor || 'N/A'}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -999,7 +1002,6 @@
             
             container.innerHTML = '';
             
-            // Filtramos solo EVENTOS no completados
             const activeEvents = activities.filter(a => a.tipo === 'EVENTO' && a.estado !== 'COMPLETADO');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1010,7 +1012,6 @@
             let displayEvents = parsedEvents.filter(e => e.dateObj.getTime() === today.getTime());
             let isToday = true;
 
-            // Si no hay para hoy, buscamos los siguientes
             if (displayEvents.length === 0) {
                 isToday = false;
                 const futureEvents = parsedEvents.filter(e => e.dateObj > today);
@@ -1033,21 +1034,21 @@
             descEl.textContent = isToday ? "Tus eventos programados para la jornada." : "No hay eventos hoy. Próximos en agenda:";
 
             container.innerHTML = `
-                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-sky-200 dark:border-sky-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-sky-400 transition cursor-pointer" onclick="filterByDate('${displayEvents[0].deadline}')" title="Haz clic para filtrar en la tabla">
+                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-sky-200 dark:border-sky-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-sky-400 transition cursor-pointer" onclick="filterByDate('${displayEvents[0].deadline || ''}')" title="Haz clic para filtrar en la tabla">
                     <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-1.5">
                         <span class="font-bold text-sky-600 dark:text-sky-400 text-xs flex items-center gap-1.5">
-                            <i class="fa-solid fa-calendar-check"></i> ${displayEvents[0].deadline} (${displayEvents[0].anio || displayEvents[0].dateObj.getFullYear()})
+                            <i class="fa-solid fa-calendar-check"></i> ${displayEvents[0].deadline || ''} (${displayEvents[0].anio || displayEvents[0].dateObj.getFullYear()})
                         </span>
                     </div>
                     <div class="space-y-1.5 max-h-[140px] overflow-y-auto scrollbar-thin">
                         ${displayEvents.map(e => `
                             <div class="flex flex-col gap-1 text-slate-700 dark:text-slate-300 bg-sky-50/50 dark:bg-sky-950/20 px-2.5 py-1.5 rounded-lg border border-sky-100 dark:border-sky-900/40">
                                 <div class="flex items-center justify-between gap-2">
-                                    <span class="font-medium truncate flex-1 flex items-center gap-1"><i class="fa-solid fa-calendar-check text-sky-500"></i> ${e.actividad}</span>
+                                    <span class="font-medium truncate flex-1 flex items-center gap-1"><i class="fa-solid fa-calendar-check text-sky-500"></i> ${e.actividad || 'Sin nombre'}</span>
                                     ${e.hora ? `<span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-1 rounded border border-slate-200 dark:border-slate-700 flex-shrink-0 whitespace-nowrap"><i class="fa-regular fa-clock"></i> ${e.hora}</span>` : ''}
                                 </div>
                                 <div class="flex justify-end mt-0.5">
-                                    <span class="text-[8px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 uppercase">${e.labor}</span>
+                                    <span class="text-[8px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-100 dark:border-indigo-900 uppercase">${e.labor || 'N/A'}</span>
                                 </div>
                             </div>
                         `).join('')}
@@ -1094,10 +1095,10 @@
                                 <div class="flex flex-col gap-1 text-slate-700 dark:text-slate-300 bg-rose-50/50 dark:bg-rose-950/20 px-2.5 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40">
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="truncate">
-                                            <span class="font-bold text-rose-600 dark:text-rose-400 mr-1">[${t.deadline}]</span>
-                                            <span class="font-medium">${t.actividad}</span>
+                                            <span class="font-bold text-rose-600 dark:text-rose-400 mr-1">[${t.deadline || ''}]</span>
+                                            <span class="font-medium">${t.actividad || 'Sin nombre'}</span>
                                         </div>
-                                        <span class="text-[9px] bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 px-1.5 py-0.5 rounded font-semibold flex-shrink-0">${t.labor}</span>
+                                        <span class="text-[9px] bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 px-1.5 py-0.5 rounded font-semibold flex-shrink-0">${t.labor || 'N/A'}</span>
                                     </div>
                                     <div class="flex items-center justify-between text-[10px] text-rose-600 dark:text-rose-400 font-mono font-bold">
                                         <span>Retraso:</span>
@@ -1155,24 +1156,28 @@
             renderDashboard();
         }
 
+        function isMonthCompletedAndPast(mesName) {
+            const monthOrder = ["Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre", "Enero"];
+            const currentActiveMonthIndex = 2;
+            const mIndex = monthOrder.indexOf(mesName);
+            if (mIndex !== -1 && mIndex < currentActiveMonthIndex) {
+                const monthActs = activities.filter(a => (a.mes || "Octubre") === mesName);
+                if (monthActs.length > 0 && monthActs.every(a => a.estado === 'COMPLETADO')) return true;
+            }
+            return false;
+        }
+
         function calculateWeekFromDeadline(deadlineStr) {
             if (!deadlineStr) return 1;
-            const monthsMap = {
-                'jan': 0, 'ene': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'abr': 3,
-                'may': 4, 'jun': 5, 'jul': 6, 'aug': 7, 'ago': 7,
-                'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11, 'dic': 11
-            };
             const parts = deadlineStr.toLowerCase().split('-');
             if (parts.length < 2) return 1;
             const day = parseInt(parts[0]) || 1;
             const monthStr = parts[1].substring(0, 3);
+            const monthsMap = { 'jan': 0, 'ene': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'abr': 3, 'may': 4, 'jun': 5, 'jul': 6, 'aug': 7, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11, 'dic': 11 };
             const month = monthsMap[monthStr] !== undefined ? monthsMap[monthStr] : 9;
             let year = 2026;
-            if (parts.length >= 3) {
-                year = parseInt(parts[2]) || (month === 0 ? 2027 : 2026);
-            } else if (month === 0) {
-                year = 2027;
-            }
+            if (parts.length >= 3) year = parseInt(parts[2]) || (month === 0 ? 2027 : 2026);
+            else if (month === 0) year = 2027;
             const date = new Date(year, month, day);
             if (year === 2027) {
                 const startOfYear = new Date(2027, 0, 1);
@@ -1197,6 +1202,8 @@
         }
 
         function getWeekDates(year, weekNum) {
+            if (!weekNum || isNaN(weekNum)) weekNum = 1;
+            if (!year || isNaN(year)) year = 2026;
             const simple = new Date(year, 0, 1 + (weekNum - 1) * 7);
             const dow = simple.getDay();
             const ISOweekStart = new Date(simple);
@@ -1227,9 +1234,9 @@
             const estadoContainer = document.getElementById('estado-checkboxes');
             const semanaContainer = document.getElementById('semana-checkboxes');
             
-            const labores = [...new Set(activities.map(a => a.labor))].sort();
+            const labores = [...new Set(activities.map(a => a.labor || "Sin Categoría"))].sort();
             const estados = ["PENDIENTE", "EN DESARROLLO", "COMPLETADO", "ATRASADO"];
-            const semanas = [...new Set(activities.map(a => a.semana))].sort((a,b) => a-b);
+            const semanas = [...new Set(activities.map(a => a.semana || 1))].sort((a,b) => a-b);
 
             laborContainer.innerHTML = '';
             labores.forEach(l => {
@@ -1353,7 +1360,9 @@
                 monthOrder.forEach(m => counts[m] = 0);
 
                 activities.forEach(a => {
-                    let mName = a.mes || "Octubre";
+                    let mRaw = a.mes || "Octubre";
+                    let mName = mRaw.charAt(0).toUpperCase() + mRaw.slice(1).toLowerCase();
+                    if (!monthOrder.includes(mName)) mName = "Octubre"; // Fallback para datos mal importados
                     if (!counts[mName]) counts[mName] = 0;
                     counts[mName]++;
                 });
@@ -1402,11 +1411,15 @@
                 breadcrumbText.textContent = `Mes: ${selectedMonth}`;
                 subtitle.textContent = `Semanas correspondientes a ${selectedMonth}. Incluye el rango de fechas.`;
 
-                const monthActs = activities.filter(a => (a.mes || "Octubre") === selectedMonth);
+                const monthActs = activities.filter(a => {
+                    let mName = (a.mes || "Octubre").charAt(0).toUpperCase() + (a.mes || "Octubre").slice(1).toLowerCase();
+                    return mName === selectedMonth;
+                });
                 const weekMap = {};
                 monthActs.forEach(a => {
-                    if (!weekMap[a.semana]) weekMap[a.semana] = { count: 0, year: a.anio || 2026 };
-                    weekMap[a.semana].count++;
+                    let semNum = a.semana || 1;
+                    if (!weekMap[semNum]) weekMap[semNum] = { count: 0, year: a.anio || 2026 };
+                    weekMap[semNum].count++;
                 });
 
                 const weeks = Object.keys(weekMap).map(Number).sort((a,b) => a - b);
@@ -1461,10 +1474,10 @@
                 breadcrumbText.textContent = `${selectedMonth} ➔ Semana ${selectedWeek}`;
                 subtitle.textContent = `Días con actividades programadas en la Semana ${selectedWeek}.`;
 
-                const weekActs = activities.filter(a => a.semana === selectedWeek);
+                const weekActs = activities.filter(a => (a.semana || 1) === selectedWeek);
                 const dayMap = {};
                 weekActs.forEach(a => {
-                    const key = `${a.deadline} (${a.anio || 2026})`;
+                    const key = `${a.deadline || 'Sin Fecha'} (${a.anio || 2026})`;
                     if (!dayMap[key]) dayMap[key] = [];
                     dayMap[key].push(a);
                 });
@@ -1481,7 +1494,7 @@
                             cb.checked = (cb.value === selectedWeek.toString());
                         });
                         updateDropdownButtonLabels();
-                        document.getElementById('search-input').value = dayActs[0].deadline;
+                        document.getElementById('search-input').value = dayActs[0].deadline || '';
                         filterActivities();
                     };
 
@@ -1494,7 +1507,7 @@
                                 <span class="w-3 h-3 rounded-full ${workload.dot} ring-2 ring-white/80 shadow-md" title="${workload.label}"></span>
                             </div>
                             <div class="p-4 space-y-1.5 max-h-36 overflow-y-auto scrollbar-thin pr-1">
-                                ${dayActs.map(da => `<div class="bg-slate-50 dark:bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-darkBorder text-[11px] font-semibold truncate text-slate-700 dark:text-slate-300 shadow-sm">• ${da.actividad}</div>`).join('')}
+                                ${dayActs.map(da => `<div class="bg-slate-50 dark:bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-darkBorder text-[11px] font-semibold truncate text-slate-700 dark:text-slate-300 shadow-sm">• ${da.actividad || 'Sin nombre'}</div>`).join('')}
                             </div>
                         </div>
                         <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-darkBorder text-xs font-extrabold flex items-center justify-between text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
@@ -1639,7 +1652,7 @@
 
                         cell.onclick = () => {
                             if (count > 0) {
-                                document.getElementById('search-input').value = dayActs[0].deadline;
+                                document.getElementById('search-input').value = dayActs[0].deadline || '';
                                 filterActivities();
                                 showToast(`Filtrando por el día ${day} (${count} actividades)`);
                             } else if (holidayName) {
@@ -1712,16 +1725,16 @@
             const dataToExport = activities.map(a => ({
                 "ID": a.id,
                 "Tipo": a.tipo || 'TAREA',
-                "Categoría": a.labor,
-                "Actividad": a.actividad,
-                "Deadline": a.deadline,
+                "Categoría": a.labor || 'Sin Categoría',
+                "Actividad": a.actividad || 'Sin nombre',
+                "Deadline": a.deadline || '',
                 "Hora": a.hora || 'Sin hora',
-                "Mes": a.mes,
-                "Año": a.anio,
-                "Semana": a.semana,
-                "Estado": a.estado,
-                "Responsable": a.responsable,
-                "Notas / Comentarios": a.comentarios
+                "Mes": a.mes || '',
+                "Año": a.anio || '',
+                "Semana": a.semana || '',
+                "Estado": a.estado || 'PENDIENTE',
+                "Responsable": a.responsable || '',
+                "Notas / Comentarios": a.comentarios || ''
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -1791,7 +1804,7 @@
                 div.className = `${colorClass} p-4 rounded-2xl post-it-shadow flex flex-col justify-between h-40 transform rotate-1 hover:rotate-0 hover:scale-105 transition-all duration-300 relative group`;
                 div.innerHTML = `
                     <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-3 bg-amber-400/40 rounded-sm"></div>
-                    <textarea onchange="updateStickyNote(${note.id}, this.value)" class="w-full h-24 bg-transparent resize-none focus:outline-none post-it-font text-lg font-bold leading-snug">${note.text}</textarea>
+                    <textarea onchange="updateStickyNote(${note.id}, this.value)" class="w-full h-24 bg-transparent resize-none focus:outline-none post-it-font text-lg font-bold leading-snug">${note.text || ''}</textarea>
                     <div class="flex justify-between items-center pt-2 border-t border-black/10 dark:border-white/10">
                         <span class="text-[10px] opacity-75 font-mono">Post-it #${note.id}</span>
                         <button onclick="deleteStickyNote(${note.id})" class="opacity-0 group-hover:opacity-100 text-rose-700 dark:text-rose-400 hover:scale-110 transition text-xs" title="Eliminar nota">
@@ -1834,7 +1847,7 @@
         }
 
         function filterActivities() {
-            const search = document.getElementById('search-input').value.toLowerCase();
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
             const selectedLabores = Array.from(document.querySelectorAll('.labor-checkbox:checked')).map(cb => cb.value);
             const selectedEstados = Array.from(document.querySelectorAll('.estado-checkbox:checked')).map(cb => cb.value);
             const selectedSemanas = Array.from(document.querySelectorAll('.semana-checkbox:checked')).map(cb => Number(cb.value));
@@ -1844,17 +1857,17 @@
                 if (!showCompletedArchive && isCompletedPast) return false;
                 if (showCompletedArchive && !isCompletedPast) return false;
 
-                const matchSubtasks = a.subtasks && a.subtasks.some(st => st.text.toLowerCase().includes(search));
-                const matchSearch = a.actividad.toLowerCase().includes(search) || 
-                                    a.responsable.toLowerCase().includes(search) || 
-                                    a.labor.toLowerCase().includes(search) || 
-                                    a.deadline.toLowerCase().includes(search) ||
-                                    (a.comentarios && a.comentarios.toLowerCase().includes(search)) ||
+                const matchSubtasks = a.subtasks && a.subtasks.some(st => (st.text || "").toLowerCase().includes(search));
+                const matchSearch = (a.actividad || "").toLowerCase().includes(search) || 
+                                    (a.responsable || "").toLowerCase().includes(search) || 
+                                    (a.labor || "").toLowerCase().includes(search) || 
+                                    (a.deadline || "").toLowerCase().includes(search) ||
+                                    (a.comentarios || "").toLowerCase().includes(search) ||
                                     matchSubtasks;
 
-                const matchLabor = selectedLabores.length === 0 || selectedLabores.includes(a.labor);
+                const matchLabor = selectedLabores.length === 0 || selectedLabores.includes(a.labor || "Sin Categoría");
                 const matchEstado = selectedEstados.length === 0 || selectedEstados.includes(a.estado);
-                const matchSemana = selectedSemanas.length === 0 || selectedSemanas.includes(a.semana);
+                const matchSemana = selectedSemanas.length === 0 || selectedSemanas.includes(a.semana || 1);
 
                 return matchSearch && matchLabor && matchEstado && matchSemana;
             });
@@ -1910,7 +1923,7 @@
                 else if (item.estado === 'ATRASADO') badgeColor = 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
 
                 let catBadge = '';
-                const lUpper = item.labor.toUpperCase();
+                const lUpper = (item.labor || "").toUpperCase();
                 if (lUpper.includes('CLASES')) catBadge = 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-800';
                 else if (lUpper.includes('DOCTORADO')) catBadge = 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-800';
                 else if (lUpper.includes('INVESTIGACIÓN')) catBadge = 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-200 border-cyan-300 dark:border-cyan-800';
@@ -1932,13 +1945,13 @@
                 tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-darkBorder last:border-none';
                 tr.innerHTML = `
                     <td class="py-3.5 px-4 align-top">
-                        <span onclick="inlineEditCategory(${item.id})" class="border px-2.5 py-1 rounded-full text-xs font-bold ${catBadge} cursor-pointer hover:opacity-80 transition inline-block" title="Haz clic para cambiar categoría">${item.labor}</span>
+                        <span onclick="inlineEditCategory(${item.id})" class="border px-2.5 py-1 rounded-full text-xs font-bold ${catBadge} cursor-pointer hover:opacity-80 transition inline-block" title="Haz clic para cambiar categoría">${item.labor || 'Sin Categoría'}</span>
                     </td>
                     <td class="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 align-top">
                         <div class="space-y-1.5">
                             <div class="flex items-start gap-2">
                                 ${tipoIcon}
-                                <span onclick="inlineEditActivityName(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition block font-medium" title="Haz clic para editar actividad">${item.actividad}</span>
+                                <span onclick="inlineEditActivityName(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition block font-medium" title="Haz clic para editar actividad">${item.actividad || 'Sin nombre'}</span>
                             </div>
                             ${prog ? `
                                 <div class="space-y-1 pt-1 ml-5">
@@ -1956,14 +1969,14 @@
                     <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs align-top">
                         <div class="relative inline-flex items-center gap-1.5 group cursor-pointer">
                             <input type="date" onchange="inlineUpdateDeadlineDate(${item.id}, this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" title="Cambiar fecha deadline">
-                            <span class="font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition pointer-events-none">${item.deadline} (${item.anio || 2026})</span>
+                            <span class="font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition pointer-events-none">${item.deadline || 'Sin fecha'} (${item.anio || 2026})</span>
                             <i class="fa-solid fa-calendar-days text-slate-400 group-hover:text-indigo-600 text-[11px] pointer-events-none"></i>
                         </div><br>
                         ${horaDisplay}
                     </td>
                     <td class="py-3.5 px-4 text-center align-top">
                         <div class="inline-flex flex-col items-center bg-indigo-50/80 dark:bg-indigo-950/50 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
-                            <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Sem ${item.semana}</span>
+                            <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Sem ${item.semana || 1}</span>
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">${dateRangeStr}</span>
                         </div>
                     </td>
@@ -1976,7 +1989,7 @@
                         </select>
                     </td>
                     <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs align-top">
-                        <span onclick="inlineEditResponsible(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Haz clic para cambiar responsable">${item.responsable}</span>
+                        <span onclick="inlineEditResponsible(${item.id})" class="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Haz clic para cambiar responsable">${item.responsable || ''}</span>
                     </td>
                     <td class="py-3.5 px-4 text-center align-top">
                         <button onclick="toggleDetailRow(${item.id})" class="text-xs font-semibold px-2.5 py-1 rounded-lg border transition flex items-center justify-center gap-1.5 mx-auto ${(hasComment || hasSubtasks) ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-darkBorder hover:bg-slate-100'}" title="Ver subtareas y notas">
@@ -2003,7 +2016,7 @@
                         <div class="max-w-2xl mx-auto bg-white dark:bg-darkCard p-4 rounded-xl border border-slate-200 dark:border-darkBorder shadow-sm space-y-4">
                             <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-2">
                                 <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-bars-progress"></i> Detalles y Subtareas: ${item.actividad}
+                                    <i class="fa-solid fa-bars-progress"></i> Detalles y Subtareas: ${item.actividad || ''}
                                 </span>
                                 <button onclick="toggleDetailRow(${item.id})" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs">
                                     <i class="fa-solid fa-xmark"></i> Cerrar
@@ -2016,7 +2029,7 @@
                                         <div class="flex items-center justify-between gap-2 text-xs">
                                             <label class="flex items-center space-x-2 cursor-pointer select-none">
                                                 <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${item.id}, ${sIndex})" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                                <span class="${st.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}">${st.text}</span>
+                                                <span class="${st.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}">${st.text || ''}</span>
                                             </label>
                                             <button onclick="removeSubtaskInline(${item.id}, ${sIndex})" class="text-slate-400 hover:text-rose-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
                                         </div>
@@ -2054,13 +2067,14 @@
             container.innerHTML = '';
             const stats = {};
             activities.forEach(a => {
-                if (!stats[a.labor]) {
-                    stats[a.labor] = { total: 0, completadas: 0, pendientes: 0, atrasadas: 0 };
+                let catName = a.labor || "Sin Categoría";
+                if (!stats[catName]) {
+                    stats[catName] = { total: 0, completadas: 0, pendientes: 0, atrasadas: 0 };
                 }
-                stats[a.labor].total++;
-                if (a.estado === 'COMPLETADO') stats[a.labor].completadas++;
-                else if (a.estado === 'ATRASADO') stats[a.labor].atrasadas++;
-                else stats[a.labor].pendientes++;
+                stats[catName].total++;
+                if (a.estado === 'COMPLETADO') stats[catName].completadas++;
+                else if (a.estado === 'ATRASADO') stats[catName].atrasadas++;
+                else stats[catName].pendientes++;
             });
 
             Object.keys(stats).sort().forEach(cat => {
@@ -2230,9 +2244,9 @@
                 document.getElementById('modal-title').textContent = "Editar Actividad";
                 const act = activities.find(a => a.id === id);
                 document.getElementById('activity-id').value = act.id;
-                document.getElementById('form-labor').value = act.labor;
-                document.getElementById('form-actividad').value = act.actividad;
-                document.getElementById('form-deadline').value = act.deadline;
+                document.getElementById('form-labor').value = act.labor || '';
+                document.getElementById('form-actividad').value = act.actividad || '';
+                document.getElementById('form-deadline').value = act.deadline || '';
                 document.getElementById('form-hora').value = act.hora || '';
                 document.getElementById('form-tipo').value = act.tipo || 'TAREA';
                 document.getElementById('form-comentarios').value = act.comentarios || '';
@@ -2242,23 +2256,25 @@
                 }
 
                 try {
-                    const monthsMapInv = {
-                        'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
-                        'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12',
-                        'jan': '01', 'apr': '04', 'aug': '08'
-                    };
-                    const parts = act.deadline.toLowerCase().split('-');
-                    if (parts.length >= 2) {
-                        const dNum = parts[0].padStart(2, '0');
-                        const mNum = monthsMapInv[parts[1].substring(0,3)] || '10';
-                        const yNum = act.anio || (mNum === '01' ? 2027 : 2026);
-                        document.getElementById('form-deadline-date').value = `${yNum}-${mNum}-${dNum}`;
+                    if (act.deadline) {
+                        const monthsMapInv = {
+                            'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
+                            'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12',
+                            'jan': '01', 'apr': '04', 'aug': '08'
+                        };
+                        const parts = act.deadline.toLowerCase().split('-');
+                        if (parts.length >= 2) {
+                            const dNum = parts[0].padStart(2, '0');
+                            const mNum = monthsMapInv[parts[1].substring(0,3)] || '10';
+                            const yNum = act.anio || (mNum === '01' ? 2027 : 2026);
+                            document.getElementById('form-deadline-date').value = `${yNum}-${mNum}-${dNum}`;
+                        }
                     }
                 } catch(e) {}
 
-                document.getElementById('form-semana').value = act.semana;
-                document.getElementById('form-estado').value = act.estado;
-                document.getElementById('form-responsable').value = act.responsable;
+                document.getElementById('form-semana').value = act.semana || '';
+                document.getElementById('form-estado').value = act.estado || 'PENDIENTE';
+                document.getElementById('form-responsable').value = act.responsable || '';
             } else {
                 document.getElementById('modal-title').textContent = "Nueva Actividad";
                 document.getElementById('activity-form').reset();
@@ -2310,16 +2326,18 @@
                 estado = 'COMPLETADO';
             }
 
-            const parts = deadline.toLowerCase().split('-');
-            const monthsNames = {'jan':'Enero', 'ene':'Enero', 'feb':'Febrero', 'mar':'Marzo', 'apr':'Abril', 'abr':'Abril', 'may':'Mayo', 'jun':'Junio', 'jul':'Julio', 'aug':'Agosto', 'ago':'Agosto', 'sep':'Septiembre', 'oct':'Octubre', 'nov':'Noviembre', 'dec':'Diciembre', 'dic':'Diciembre'};
             let mes = "Octubre";
             let anio = 2026;
-            if (parts.length >= 2) {
-                const mKey = parts[1].substring(0,3);
-                if (monthsNames[mKey]) mes = monthsNames[mKey];
-                if (mes === 'Enero') anio = 2027;
+            if (deadline) {
+                const parts = deadline.toLowerCase().split('-');
+                const monthsNames = {'jan':'Enero', 'ene':'Enero', 'feb':'Febrero', 'mar':'Marzo', 'apr':'Abril', 'abr':'Abril', 'may':'Mayo', 'jun':'Junio', 'jul':'Julio', 'aug':'Agosto', 'ago':'Agosto', 'sep':'Septiembre', 'oct':'Octubre', 'nov':'Noviembre', 'dec':'Diciembre', 'dic':'Diciembre'};
+                if (parts.length >= 2) {
+                    const mKey = parts[1].substring(0,3);
+                    if (monthsNames[mKey]) mes = monthsNames[mKey];
+                    if (mes === 'Enero') anio = 2027;
+                }
+                if (parts.length >= 3) anio = parseInt(parts[2]) || anio;
             }
-            if (parts.length >= 3) anio = parseInt(parts[2]) || anio;
 
             if (estado === 'PENDIENTE' || estado === 'EN DESARROLLO') {
                 const tempObj = { deadline, anio };
