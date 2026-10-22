@@ -96,6 +96,7 @@
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-6 flex-grow w-full space-y-6">
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Widget de Próximo Vencimiento (Solo Tareas) -->
             <div id="urgent-widget" class="bg-gradient-to-br from-amber-500/10 via-rose-500/15 to-indigo-500/10 dark:from-amber-950/40 dark:via-rose-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-amber-300/70 dark:border-amber-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-amber-500 to-rose-500 text-white p-3 rounded-2xl shadow-md flex-shrink-0 animate-pulse">
@@ -112,7 +113,7 @@
                 <div id="urgent-tasks-container" class="w-full"></div>
             </div>
 
-            <!-- NUEVO VISOR DE EVENTOS -->
+            <!-- Visor de Eventos -->
             <div id="events-widget" class="bg-gradient-to-br from-sky-500/10 via-blue-500/15 to-indigo-500/10 dark:from-sky-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-sky-300/70 dark:border-sky-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -129,6 +130,7 @@
                 <div id="events-tasks-container" class="w-full"></div>
             </div>
 
+            <!-- Actividades Atrasadas -->
             <div id="overdue-widget" class="bg-gradient-to-br from-rose-500/10 via-rose-600/15 to-slate-500/10 dark:from-rose-950/40 dark:via-rose-900/40 dark:to-slate-950/40 p-4 sm:p-5 rounded-2xl border border-rose-300/70 dark:border-rose-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-rose-600 to-red-700 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -441,7 +443,7 @@
         </div>
     </div>
 
-    <!-- FORMULARIO DE ACTIVIDAD -->
+    <!-- FORMULARIO DE ACTIVIDAD ACTUALIZADO -->
     <div id="activity-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
         <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all border border-slate-200 dark:border-darkBorder my-8">
             <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
@@ -677,7 +679,6 @@
         async function initFirebase() {
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
-                const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
                 const firestore = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
                 
                 setDoc = firestore.setDoc;
@@ -698,15 +699,15 @@
                 
                 const appId = "dashboard-carolo";
                 const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
                 db = firestore.getFirestore(app);
                 
-                await signInAnonymously(auth);
-                userId = auth.currentUser?.uid || "carlos_user";
+                // ASIGNACIÓN UNIVERSAL FIJA
+                userId = "carlos_oficial_universal"; 
                 
                 setupRealtimeListeners(appId);
             } catch (e) {
                 console.warn("Iniciando en modo local (Firebase falló)", e);
+                initLocal();
             }
         }
 
@@ -775,6 +776,12 @@
             const appId = "dashboard-carolo";
             try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(id))); } 
             catch(e) { console.error(e); }
+        }
+
+        function initLocal() {
+            populateFilters();
+            renderDashboard();
+            renderStickyNotes();
         }
 
         let currentTimelineLevel = 'months';
@@ -984,7 +991,6 @@
             `;
         }
 
-        /* ====== NUEVO WIDGET: VISOR DE EVENTOS ====== */
         function renderEventsWidget() {
             const container = document.getElementById('events-tasks-container');
             const titleEl = document.getElementById('events-widget-title');
@@ -1149,17 +1155,6 @@
             renderDashboard();
         }
 
-        function isMonthCompletedAndPast(mesName) {
-            const monthOrder = ["Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre", "Enero"];
-            const currentActiveMonthIndex = 2;
-            const mIndex = monthOrder.indexOf(mesName);
-            if (mIndex !== -1 && mIndex < currentActiveMonthIndex) {
-                const monthActs = activities.filter(a => (a.mes || "Octubre") === mesName);
-                if (monthActs.length > 0 && monthActs.every(a => a.estado === 'COMPLETADO')) return true;
-            }
-            return false;
-        }
-
         function calculateWeekFromDeadline(deadlineStr) {
             if (!deadlineStr) return 1;
             const monthsMap = {
@@ -1314,7 +1309,7 @@
             filterActivities();
             renderUrgentWidget();
             renderOverdueWidget();
-            renderEventsWidget(); // <-- Llamada al nuevo widget
+            renderEventsWidget();
         }
 
         function updateKPIs() {
