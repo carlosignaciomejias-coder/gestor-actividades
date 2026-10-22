@@ -6,7 +6,6 @@
     <title>Gestor de Actividades - Carlos</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><path fill=%22%234f46e5%22 d=%22M152 64H360c22.1 0 40 17.9 40 40V408c0 22.1-17.9 40-40 40H152c-22.1 0-40-17.9-40-40V104c0-22.1 17.9-40 40-40zM48 160H80V352H48c-26.5 0-48-21.5-48-48V208c0-26.5 21.5-48 48-48zm416 0h32c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H464V160z%22/></svg>">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -23,7 +22,6 @@
         }
     </script>
     
-    <!-- Iconos, Fuentes y Librería para Exportar a Excel -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -96,7 +94,6 @@
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-6 flex-grow w-full space-y-6">
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <!-- Widget de Próximo Vencimiento (Solo Tareas) -->
             <div id="urgent-widget" class="bg-gradient-to-br from-amber-500/10 via-rose-500/15 to-indigo-500/10 dark:from-amber-950/40 dark:via-rose-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-amber-300/70 dark:border-amber-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-amber-500 to-rose-500 text-white p-3 rounded-2xl shadow-md flex-shrink-0 animate-pulse">
@@ -113,7 +110,6 @@
                 <div id="urgent-tasks-container" class="w-full"></div>
             </div>
 
-            <!-- Visor de Eventos -->
             <div id="events-widget" class="bg-gradient-to-br from-sky-500/10 via-blue-500/15 to-indigo-500/10 dark:from-sky-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-sky-300/70 dark:border-sky-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -130,7 +126,6 @@
                 <div id="events-tasks-container" class="w-full"></div>
             </div>
 
-            <!-- Actividades Atrasadas -->
             <div id="overdue-widget" class="bg-gradient-to-br from-rose-500/10 via-rose-600/15 to-slate-500/10 dark:from-rose-950/40 dark:via-rose-900/40 dark:to-slate-950/40 p-4 sm:p-5 rounded-2xl border border-rose-300/70 dark:border-rose-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-rose-600 to-red-700 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -443,7 +438,7 @@
         </div>
     </div>
 
-    <!-- FORMULARIO DE ACTIVIDAD ACTUALIZADO -->
+    <!-- FORMULARIO DE ACTIVIDAD -->
     <div id="activity-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
         <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all border border-slate-200 dark:border-darkBorder my-8">
             <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
@@ -601,57 +596,11 @@
 
         let defaultActivities = [
             { id: 1, labor: "CLASES", actividad: "ENTREGA 2 - MODULO II", deadline: "16-Oct", semana: 42, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 2, labor: "CLASES", actividad: "INFORME FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 3, labor: "CLASES", actividad: "PRESENTACIÓN FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 4, labor: "CLASES", actividad: "ENTREGA 3 - MODULO II", deadline: "16-Nov", semana: 47, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 5, labor: "CLASES", actividad: "SOLEMNE 2 - FISIO", deadline: "19-Nov", semana: 47, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 6, labor: "CLASES", actividad: "PRESENTACIÓN MODULO II", deadline: "23-Nov", semana: 48, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 7, labor: "CLASES", actividad: "EXÁMENES ORDINARIOS TRABAJO DE TÍTULO II", deadline: "23-Nov", semana: 48, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 8, labor: "CLASES", actividad: "INTEGRATIVA - FISIO", deadline: "26-Nov", semana: 48, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 9, labor: "CLASES", actividad: "EXÁMENES REPETICIÓN TRABAJO DE TÍTULO II", deadline: "30-Nov", semana: 49, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 10, labor: "CLASES", actividad: "EXÁMENES ORDINARIOS FISIO / MÓDULO", deadline: "9-Dic", semana: 50, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Diciembre", anio: 2026, subtasks: [] },
-            { id: 11, labor: "CLASES", actividad: "EXÁMES REPETICIÓN FISIO / MÓDULO", deadline: "16-Dec", semana: 51, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Diciembre", anio: 2026, subtasks: [] },
-            { id: 12, labor: "DOCTORADO", actividad: "ENTREGA INFORME PROYECTOS", deadline: "16-Oct", semana: 42, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 13, labor: "DOCTORADO", actividad: "PRESENTACIÓN REMEDIACIÓN AMBIENTAL", deadline: "21-Oct", semana: 43, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 14, labor: "DOCTORADO", actividad: "2 PRUEBA CAMBIO GLOBAL", deadline: "2-Nov", semana: 45, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 15, labor: "DOCTORADO", actividad: "2 PRUEBA REMEDIACIÓN AMBIENTAL", deadline: "25-Nov", semana: 48, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 16, labor: "DOCTORADO", actividad: "2 ENTREGA ANÁLISIS DE DATOS", deadline: "27-Nov", semana: 48, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 17, labor: "DOCTORADO", actividad: "1 ENTREGA ANÁLISIS DE DATOS", deadline: "20-Oct", semana: 43, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 18, labor: "DOCTORADO", actividad: "3 ENTREGA ANÁLISIS DE DATOS", deadline: "8-Jan", semana: 2, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Enero", anio: 2027, subtasks: [] },
-            { id: 19, labor: "DOCTORADO", actividad: "DEFENSA PROYECTO INTEGRADOR ANÁLISIS DE DATOS", deadline: "12-Jan", semana: 3, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Enero", anio: 2027, subtasks: [] },
-            { id: 20, labor: "DOCTORADO", actividad: "3 PRUEBA REMEDIACIÓN AMBIENTAL (ABI)", deadline: "13-Jan", semana: 3, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Enero", anio: 2027, subtasks: [] },
-            { id: 21, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Postulación a entropía educativa", deadline: "15-Oct", semana: 42, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 22, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Postulación a entropía educativa", deadline: "15-Oct", semana: 42, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 23, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Entrega revisión BIOMIMIC", deadline: "16-Oct", semana: 42, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 24, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Postulación JIEV - AFEVET (IDU)", deadline: "31-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 25, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Presentación en entropía educativa", deadline: "19-Nov", semana: 47, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 26, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Presentación en entropía educativa", deadline: "20-Nov", semana: 47, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 27, labor: "INVESTIGACIÓN EN DOCENCIA", actividad: "Presentación JIEV - AFEVET (IDU)", deadline: "1-Dec", semana: 49, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Diciembre", anio: 2026, subtasks: [] },
-            { id: 28, labor: "PROGRAMA VCM", actividad: "Diseño curso MMLV", deadline: "27-Oct", semana: 44, estado: "EN DESARROLLO", responsable: "Karina", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 29, labor: "PROGRAMA VCM", actividad: "INTERVENCIÓN 1 - ACTIVIDAD INFORMATIVA CESFAM JA", deadline: "30-Oct", semana: 44, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "Desarrollo Daniela", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 30, labor: "PROGRAMA VCM", actividad: "Paula Álvarez (CESFAM JA) entrega información espacio caniles para 2027", deadline: "31-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 31, labor: "PROGRAMA VCM", actividad: "Propuesta de recomendaciones de manejos y cuidados perros y gatos MMLV", deadline: "6-Nov", semana: 45, estado: "PENDIENTE", responsable: "Diego", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 32, labor: "PROGRAMA VCM", actividad: "Actualización del registro de animales presentes en MMLV potenciado con IA", deadline: "6-Nov", semana: 45, estado: "PENDIENTE", responsable: "Diego", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 33, labor: "PROGRAMA VCM", actividad: "INTERVENCIÓN 2 - AMBIENTACIÓN PERROS COMUNITARIOS CESFAM JA", deadline: "6-Nov", semana: 45, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 34, labor: "PROGRAMA VCM", actividad: "INTERVENCIÓN 1 - IMPLEMENTACIÓN SEMÁFORO CESFAM MS", deadline: "6-Nov", semana: 45, estado: "PENDIENTE", responsable: "Carlos", comentarios: "Desarrollo Tulio", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 35, labor: "PROGRAMA VCM", actividad: "INTERVENCIÓN 2 - ACTIVIDAD INFORMATIVA CESFAM MS / INAUGURACIÓN SEMÁFOROS", deadline: "9-Nov", semana: 46, estado: "PENDIENTE", responsable: "Carlos", comentarios: "Desarrollo Tulio", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 36, labor: "PROGRAMA VCM", actividad: "Presentaciones sobre intervenciones realizadas (Salud Pública)", deadline: "25-Nov", semana: 48, estado: "EN DESARROLLO", responsable: "Docentes SP", comentarios: "Tulio / Diego / Daniela", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 37, labor: "PROGRAMA VCM", actividad: "INTERVENCIÓN 3 - ACTIVIDAD INFORMATIVA CESFAM JA", deadline: "27-Nov", semana: 48, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "Desarrollo Daniela", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 38, labor: "PROGRAMA VCM", actividad: "Entrega de propuesta de reglamento de uso de caniles", deadline: "27-Nov", semana: 48, estado: "EN DESARROLLO", responsable: "Carlos", comentarios: "Desarrollo Daniela", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 39, labor: "PROGRAMA VCM", actividad: "Ejecución curso MMLV", deadline: "30-Nov", semana: 49, estado: "PENDIENTE", responsable: "Karina", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] },
-            { id: 40, labor: "PROGRAMA VCM", actividad: "Muestreo inicial MMLV (MOD. INV. II)", deadline: "1-Dec", semana: 49, estado: "PENDIENTE", responsable: "Karina", comentarios: "Karina cotizar test rápidos / Postulación a VcM Estudiantes", mes: "Diciembre", anio: 2026, subtasks: [] },
-            { id: 41, labor: "PROGRAMA VCM", actividad: "Mesa colaborativa", deadline: "1-Dec", semana: 49, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Diciembre", anio: 2026, subtasks: [] },
-            { id: 42, labor: "PROYECTO VCM", actividad: "Declaración Feria Lo Espejo", deadline: "19-Oct", semana: 43, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 43, labor: "PROYECTO VCM", actividad: "Ejecución Feria Lo Espejo", deadline: "29-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 44, labor: "SGV VCM", actividad: "Encuesta EX DURE", deadline: "14-Aug", semana: 33, estado: "COMPLETADO", responsable: "Carlos", comentarios: "", mes: "Agosto", anio: 2026, subtasks: [] },
-            { id: 45, labor: "SGV VCM", actividad: "Informe de avance", deadline: "9-Sep", semana: 37, estado: "COMPLETADO", responsable: "Carlos", comentarios: "", mes: "Septiembre", anio: 2026, subtasks: [] },
-            { id: 46, labor: "SGV VCM", actividad: "Encuesta EX POST", deadline: "13-Nov", semana: 46, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Noviembre", anio: 2026, subtasks: [] }
+            { id: 2, labor: "CLASES", actividad: "INFORME FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] }
         ];
 
         let defaultStickyNotes = [
-            { id: 1, text: "Revisar bibliografía de biomimética antes del viernes.", color: "bg-amber-200 text-slate-900" },
-            { id: 2, text: "Contactar a Paula Álvarez sobre caniles 2027.", color: "bg-yellow-200 text-slate-900" },
-            { id: 3, text: "Preparar presentación para entropía educativa.", color: "bg-lime-200 text-slate-900" }
+            { id: 1, text: "Revisar bibliografía de biomimética antes del viernes.", color: "bg-amber-200 text-slate-900" }
         ];
 
         let activities = [...defaultActivities];
@@ -701,7 +650,6 @@
                 const app = initializeApp(firebaseConfig);
                 db = firestore.getFirestore(app);
                 
-                // ASIGNACIÓN UNIVERSAL FIJA
                 userId = "carlos_oficial_universal"; 
                 
                 setupRealtimeListeners(appId);
@@ -750,12 +698,6 @@
             }, (error) => console.error("Error syncing notes", error));
         }
 
-        function initLocal() {
-            populateFilters();
-            renderDashboard();
-            renderStickyNotes();
-        }
-
         async function saveActivityToDB(act) {
             if (!userId || !db) return;
             const appId = "dashboard-carolo";
@@ -782,6 +724,12 @@
             const appId = "dashboard-carolo";
             try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(id))); } 
             catch(e) { console.error(e); }
+        }
+
+        function initLocal() {
+            populateFilters();
+            renderDashboard();
+            renderStickyNotes();
         }
 
         let currentTimelineLevel = 'months';
@@ -955,9 +903,9 @@
             }
             const parsed = activePendings.map(a => ({ ...a, dateObj: parseActivityDate(a) }));
             parsed.sort((a, b) => a.dateObj - b.dateObj);
-            const closestDateStr = parsed[0].deadline;
+            const closestDateStr = parsed[0].deadline || 'Sin fecha';
             const closestYear = parsed[0].anio || parsed[0].dateObj.getFullYear();
-            const closestTasks = parsed.filter(item => item.deadline === closestDateStr);
+            const closestTasks = parsed.filter(item => (item.deadline || 'Sin fecha') === closestDateStr);
             const targetDate = parsed[0].dateObj;
             targetDate.setHours(23, 59, 59, 999);
             currentUrgentData = { targetDate, closestTasks, closestDateStr, closestYear };
@@ -1156,17 +1104,6 @@
             renderDashboard();
         }
 
-        function isMonthCompletedAndPast(mesName) {
-            const monthOrder = ["Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre", "Enero"];
-            const currentActiveMonthIndex = 2;
-            const mIndex = monthOrder.indexOf(mesName);
-            if (mIndex !== -1 && mIndex < currentActiveMonthIndex) {
-                const monthActs = activities.filter(a => (a.mes || "Octubre") === mesName);
-                if (monthActs.length > 0 && monthActs.every(a => a.estado === 'COMPLETADO')) return true;
-            }
-            return false;
-        }
-
         function calculateWeekFromDeadline(deadlineStr) {
             if (!deadlineStr) return 1;
             const parts = deadlineStr.toLowerCase().split('-');
@@ -1362,7 +1299,7 @@
                 activities.forEach(a => {
                     let mRaw = a.mes || "Octubre";
                     let mName = mRaw.charAt(0).toUpperCase() + mRaw.slice(1).toLowerCase();
-                    if (!monthOrder.includes(mName)) mName = "Octubre"; // Fallback para datos mal importados
+                    if (!monthOrder.includes(mName)) mName = "Octubre";
                     if (!counts[mName]) counts[mName] = 0;
                     counts[mName]++;
                 });
@@ -1773,12 +1710,18 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed.activities) activities = parsed.activities;
-                    if (parsed.stickyNotes) stickyNotes = parsed.stickyNotes;
+                    if (parsed.activities) {
+                        activities = parsed.activities;
+                        activities.forEach(act => saveActivityToDB(act));
+                    }
+                    if (parsed.stickyNotes) {
+                        stickyNotes = parsed.stickyNotes;
+                        stickyNotes.forEach(note => saveNoteToDB(note));
+                    }
                     populateFilters();
                     renderDashboard();
                     renderStickyNotes();
-                    showToast("Datos importados con éxito", "emerald");
+                    showToast("Datos importados y guardados en la nube", "emerald");
                 } catch(err) {
                     showToast("Error al importar el archivo JSON", "rose");
                 }
