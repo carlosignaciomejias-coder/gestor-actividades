@@ -1,499 +1,30 @@
-<!DOCTYPE html>
-<html lang="es" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Actividades - Carlos</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><path fill=%22%234f46e5%22 d=%22M152 64H360c22.1 0 40 17.9 40 40V408c0 22.1-17.9 40-40 40H152c-22.1 0-40-17.9-40-40V104c0-22.1 17.9-40 40-40zM48 160H80V352H48c-26.5 0-48-21.5-48-48V208c0-26.5 21.5-48 48-48zm416 0h32c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H464V160z%22/></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { colors: { darkBg: '#0f172a', darkCard: '#1e293b', darkBorder: '#334155' } } }
-        }
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .post-it-font { font-family: 'Caveat', cursive, sans-serif; }
-        .scrollbar-thin::-webkit-scrollbar { height: 6px; width: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 9999px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
-        .post-it-shadow { box-shadow: 2px 4px 12px rgba(0,0,0,0.15); }
-    </style>
-</head>
-<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+// ====== ACTUALIZACIÓN: SUBTAREAS CON ENTER, VENTANA FIJA, ESTADO DELEGADO Y GRÁFICOS ======
+        window.openDetailRows = new Set();
+        window.categoryChartInstances = [];
 
-    <header class="bg-indigo-700 dark:bg-indigo-900 text-white shadow-lg sticky top-0 z-50 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3 w-full lg:w-auto justify-between lg:justify-start">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-600 p-2.5 rounded-2xl border border-indigo-500 shadow-inner">
-                        <i class="fa-solid fa-calendar-check text-2xl text-indigo-200"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg sm:text-xl font-bold tracking-tight">Gestor de Actividades de Carlos</h1>
-                        <p class="text-xs text-indigo-200" id="header-date-display">Panel académico y VCM (2026-2027)</p>
-                    </div>
-                </div>
-                <button onclick="toggleDarkMode()" class="lg:hidden bg-indigo-800 hover:bg-indigo-900 text-indigo-200 hover:text-white p-2 rounded-xl text-sm transition" title="Cambiar modo claro/oscuro">
-                    <i id="mobile-dark-icon" class="fa-solid fa-sun"></i>
-                </button>
-            </div>
-            <div class="flex items-center space-x-2 sm:space-x-3 w-full lg:w-auto justify-end flex-wrap gap-y-2">
-                <div id="today-workload-box" onclick="onHeaderCalendarClick()" class="rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-emerald-500 text-white border-emerald-600 relative group flex-shrink-0 cursor-pointer hover:scale-105" title="Hoy (Haz clic para filtrar)">
-                    <div class="absolute -top-1 w-full flex justify-around px-2 pointer-events-none">
-                        <div class="w-1.5 h-3 bg-slate-300 dark:bg-slate-400 rounded-full border border-slate-500 shadow-sm"></div>
-                        <div class="w-1.5 h-3 bg-slate-300 dark:bg-slate-400 rounded-full border border-slate-500 shadow-sm"></div>
-                    </div>
-                    <span id="today-cal-month" class="text-[8px] uppercase font-extrabold tracking-wider opacity-95 leading-none pt-1">OCT</span>
-                    <div class="flex items-center justify-between w-full px-1.5 pb-0.5">
-                        <span id="today-cal-day" class="text-sm font-black leading-none">25</span>
-                        <span id="today-cal-count" class="text-[8px] px-1 rounded bg-emerald-700/80 text-white font-bold">0</span>
-                    </div>
-                </div>
-                <div class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 text-indigo-100 px-4 py-2 rounded-2xl text-xs sm:text-sm font-mono font-bold shadow-lg flex items-center space-x-3 border border-indigo-400/40 backdrop-blur-md">
-                    <div class="bg-indigo-600/80 p-1.5 rounded-xl border border-indigo-300/30 shadow-inner">
-                        <i class="fa-solid fa-clock text-indigo-200 animate-pulse text-sm"></i>
-                    </div>
-                    <div class="flex flex-col items-start leading-tight">
-                        <span class="text-[9px] uppercase tracking-wider text-indigo-300/90 font-sans font-extrabold">Hora actual</span>
-                        <span id="digital-clock" class="tracking-widest text-sm sm:text-base font-extrabold text-white drop-shadow-sm">00:00:00</span>
-                    </div>
-                </div>
-                <button onclick="openPomodoroModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium shadow transition flex items-center space-x-2">
-                    <i class="fa-solid fa-stopwatch"></i><span>Pomodoro</span>
-                </button>
-                <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium shadow transition flex items-center space-x-2">
-                    <i class="fa-solid fa-plus"></i><span>Nueva Actividad</span>
-                </button>
-                <button onclick="toggleDarkMode()" class="hidden lg:flex bg-indigo-800 hover:bg-indigo-900 text-indigo-200 hover:text-white p-2.5 rounded-xl text-sm transition items-center justify-center shadow" title="Cambiar modo claro/oscuro">
-                    <i id="desktop-dark-icon" class="fa-solid fa-sun"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-6 flex-grow w-full space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div id="urgent-widget" class="bg-gradient-to-br from-amber-500/10 via-rose-500/15 to-indigo-500/10 dark:from-amber-950/40 dark:via-rose-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-amber-300/70 dark:border-amber-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
-                <div class="flex items-start sm:items-center space-x-3">
-                    <div class="bg-gradient-to-tr from-amber-500 to-rose-500 text-white p-3 rounded-2xl shadow-md flex-shrink-0 animate-pulse">
-                        <i class="fa-solid fa-fire text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300">Próximo Vencimiento</h2>
-                            <span id="current-date-badge" class="bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm"></span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Tareas requiriendo atención urgente.</p>
-                    </div>
-                </div>
-                <div id="urgent-tasks-container" class="w-full"></div>
-            </div>
-
-            <div id="events-widget" class="bg-gradient-to-br from-sky-500/10 via-blue-500/15 to-indigo-500/10 dark:from-sky-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-sky-300/70 dark:border-sky-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
-                <div class="flex items-start sm:items-center space-x-3">
-                    <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
-                        <i class="fa-solid fa-calendar-day text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h2 id="events-widget-title" class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-900 dark:text-sky-300">Eventos de Hoy</h2>
-                            <span id="events-count-badge" class="bg-sky-200/80 dark:bg-sky-900/80 text-sky-900 dark:text-sky-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">0</span>
-                        </div>
-                        <p id="events-widget-desc" class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Eventos programados para la jornada.</p>
-                    </div>
-                </div>
-                <div id="events-tasks-container" class="w-full"></div>
-            </div>
-
-            <div id="overdue-widget" class="bg-gradient-to-br from-rose-500/10 via-rose-600/15 to-slate-500/10 dark:from-rose-950/40 dark:via-rose-900/40 dark:to-slate-950/40 p-4 sm:p-5 rounded-2xl border border-rose-300/70 dark:border-rose-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
-                <div class="flex items-start sm:items-center space-x-3">
-                    <div class="bg-gradient-to-tr from-rose-600 to-red-700 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
-                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h2 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-rose-900 dark:text-rose-300">Actividades Atrasadas</h2>
-                            <span id="overdue-count-badge" class="bg-rose-200/80 dark:bg-rose-900/80 text-rose-900 dark:text-rose-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">0</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">Actividades cuya fecha ya pasó.</p>
-                    </div>
-                </div>
-                <div id="overdue-tasks-container" class="w-full"></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-white dark:bg-darkCard p-5 sm:p-6 rounded-3xl shadow-xl border border-slate-200/80 dark:border-darkBorder transition-colors flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
-                <div>
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white p-3 rounded-2xl shadow-md">
-                                <i class="fa-solid fa-timeline text-lg"></i>
-                            </div>
-                            <div>
-                                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Línea de Tiempo Académica</h2>
-                                <p id="timeline-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Explora tus periodos de estudio con indicadores de carga en tiempo real.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div onclick="filterTodayTasks()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Filtrar tareas de Hoy">
-                                <i class="fa-solid fa-calendar-day text-sm"></i>
-                            </div>
-                            <div onclick="exportExcel()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Descargar Plantilla Excel">
-                                <i class="fa-solid fa-file-excel text-sm"></i>
-                            </div>
-                            <div onclick="exportData()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Exportar Respaldo JSON">
-                                <i class="fa-solid fa-download text-sm"></i>
-                            </div>
-                            <div onclick="triggerImport()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm border border-slate-200 dark:border-darkBorder hover:scale-110" title="Importar Respaldo JSON">
-                                <i class="fa-solid fa-upload text-sm"></i>
-                            </div>
-                            <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importData(event)">
-                        </div>
-                        <div id="timeline-breadcrumb" class="hidden items-center space-x-2 text-xs font-semibold w-full sm:w-auto justify-end">
-                            <button onclick="resetTimelineView()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm border border-slate-200 dark:border-darkBorder font-bold">
-                                <i class="fa-solid fa-arrow-left"></i> Volver a Meses
-                            </button>
-                            <span id="breadcrumb-text" class="text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 font-black shadow-sm"></span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5 text-[11px] bg-slate-50/90 dark:bg-slate-900/70 p-3.5 rounded-2xl border border-slate-200/70 dark:border-darkBorder shadow-inner">
-                        <div class="flex flex-col space-y-1">
-                            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-calendar text-indigo-600"></i> Carga Mensual:</span>
-                            <div class="flex items-center gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-medium">
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>1-10</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span>11-19</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>20+</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col space-y-1">
-                            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-calendar-week text-indigo-600"></i> Carga Semanal:</span>
-                            <div class="flex items-center gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-medium">
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>1-2</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span>3-4</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>5+</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col space-y-1">
-                            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-calendar-day text-indigo-600"></i> Carga Diaria:</span>
-                            <div class="flex items-center gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-medium">
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>1</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span>2</span>
-                                <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>3+</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="timeline-container" class="flex overflow-x-auto pb-3 pt-1 space-x-4 scrollbar-thin"></div>
-            </div>
-
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-3xl shadow-xl border border-slate-200/80 dark:border-darkBorder transition-colors flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 gap-2">
-                        <div class="flex items-center space-x-2">
-                            <div class="bg-indigo-100 dark:bg-indigo-950 p-2 rounded-xl text-indigo-600 dark:text-indigo-400">
-                                <i class="fa-solid fa-calendar-days text-sm"></i>
-                            </div>
-                            <h2 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">Calendario (Chile)</h2>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="goToCurrentMonth()" class="bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-1 rounded-lg text-[10px] font-extrabold transition border border-indigo-200 dark:border-indigo-800">Hoy</button>
-                            <button onclick="changeCalendarMonth(-1)" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 rounded-lg text-xs font-bold transition text-slate-700 dark:text-slate-200"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span id="calendar-month-label" class="text-[11px] font-extrabold px-2 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-200 dark:border-indigo-800">Oct 2026</span>
-                            <button onclick="changeCalendarMonth(1)" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-1.5 rounded-lg text-xs font-bold transition text-slate-700 dark:text-slate-200"><i class="fa-solid fa-chevron-right"></i></button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-8 gap-1 mb-1 text-center text-[10px] font-bold text-slate-400 uppercase">
-                        <span>Sem</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
-                    </div>
-                    <div id="calendar-grid" class="grid grid-cols-8 gap-1"></div>
-                </div>
-                <div class="mt-3 pt-2 border-t border-slate-100 dark:border-darkBorder text-[9px] text-slate-400 flex items-center justify-between">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-red-500 inline-block"></span> Feriado Chile</span>
-                    <span class="italic">Clic en día para filtrar</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-darkCard p-5 rounded-3xl shadow-xl border border-slate-200/80 dark:border-darkBorder transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-amber-400 text-slate-900 p-2.5 rounded-2xl shadow-md"><i class="fa-solid fa-note-sticky text-lg"></i></div>
-                    <div>
-                        <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Notas Rápidas (Post-it Board)</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Apunta ideas al vuelo con estilo adhesivo.</p>
-                    </div>
-                </div>
-                <button onclick="addStickyNote()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-3.5 py-2 rounded-xl text-xs font-bold shadow transition flex items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Nuevo Post-it
-                </button>
-            </div>
-            <div id="sticky-notes-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2"></div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between">
-                <div><p class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase">Total Actividades</p><h3 id="kpi-total" class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">0</h3></div>
-                <div class="bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 p-2.5 sm:p-3 rounded-xl"><i class="fa-solid fa-list-check text-lg sm:text-xl"></i></div>
-            </div>
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between">
-                <div><p class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase">Pendientes</p><h3 id="kpi-pendientes" class="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">0</h3></div>
-                <div class="bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 p-2.5 sm:p-3 rounded-xl"><i class="fa-solid fa-clock text-lg sm:text-xl"></i></div>
-            </div>
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between">
-                <div><p class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase">En Desarrollo</p><h3 id="kpi-desarrollo" class="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">0</h3></div>
-                <div class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 p-2.5 sm:p-3 rounded-xl"><i class="fa-solid fa-spinner text-lg sm:text-xl"></i></div>
-            </div>
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between">
-                <div><p class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase">Completados</p><h3 id="kpi-completado" class="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0</h3></div>
-                <div class="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 p-2.5 sm:p-3 rounded-xl"><i class="fa-solid fa-circle-check text-lg sm:text-xl"></i></div>
-            </div>
-            <div class="bg-white dark:bg-darkCard p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex items-center justify-between col-span-2 sm:col-span-1">
-                <div><p class="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase">Atrasados</p><h3 id="kpi-atrasado" class="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">0</h3></div>
-                <div class="bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 p-2.5 sm:p-3 rounded-xl"><i class="fa-solid fa-triangle-exclamation text-lg sm:text-xl"></i></div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div class="relative w-full md:w-80">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="search-input" oninput="filterActivities()" placeholder="Buscar actividad, subtarea, comentario..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div class="flex flex-wrap gap-2.5 w-full md:w-auto items-center">
-                <div class="relative flex-1 sm:flex-none dropdown-wrapper">
-                    <button onclick="toggleDropdown('labor-dropdown')" type="button" class="w-full sm:w-44 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder text-slate-700 dark:text-slate-200 text-xs font-medium rounded-xl px-3 py-2.5 flex items-center justify-between shadow-sm">
-                        <span id="labor-btn-label" class="truncate">Categorías (Todas)</span><i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-                    </button>
-                    <div id="labor-dropdown" class="hidden absolute z-30 mt-1 w-56 bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-xl shadow-xl p-3 space-y-2 max-h-56 overflow-y-auto">
-                        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-darkBorder text-[11px] font-bold">
-                            <span>Filtrar Categorías</span><button onclick="selectAll('labor', true)" class="text-indigo-600 dark:text-indigo-400 hover:underline">Todas</button>
-                        </div>
-                        <div id="labor-checkboxes" class="space-y-1.5 text-xs"></div>
-                    </div>
-                </div>
-                <div class="relative flex-1 sm:flex-none dropdown-wrapper">
-                    <button onclick="toggleDropdown('estado-dropdown')" type="button" class="w-full sm:w-44 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder text-slate-700 dark:text-slate-200 text-xs font-medium rounded-xl px-3 py-2.5 flex items-center justify-between shadow-sm">
-                        <span id="estado-btn-label" class="truncate">Estados (Todos)</span><i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-                    </button>
-                    <div id="estado-dropdown" class="hidden absolute z-30 mt-1 w-48 bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-xl shadow-xl p-3 space-y-2 max-h-56 overflow-y-auto">
-                        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-darkBorder text-[11px] font-bold">
-                            <span>Filtrar Estados</span><button onclick="selectAll('estado', true)" class="text-indigo-600 dark:text-indigo-400 hover:underline">Todas</button>
-                        </div>
-                        <div id="estado-checkboxes" class="space-y-1.5 text-xs"></div>
-                    </div>
-                </div>
-                <div class="relative flex-1 sm:flex-none dropdown-wrapper">
-                    <button onclick="toggleDropdown('semana-dropdown')" type="button" class="w-full sm:w-40 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder text-slate-700 dark:text-slate-200 text-xs font-medium rounded-xl px-3 py-2.5 flex items-center justify-between shadow-sm">
-                        <span id="semana-btn-label" class="truncate">Semanas (Todas)</span><i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-                    </button>
-                    <div id="semana-dropdown" class="hidden absolute z-30 mt-1 w-48 bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-xl shadow-xl p-3 space-y-2 max-h-56 overflow-y-auto">
-                        <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-darkBorder text-[11px] font-bold">
-                            <span>Filtrar Semanas</span><button onclick="selectAll('semana', true)" class="text-indigo-600 dark:text-indigo-400 hover:underline">Todas</button>
-                        </div>
-                        <div id="semana-checkboxes" class="space-y-1.5 text-xs max-h-40 overflow-y-auto"></div>
-                    </div>
-                </div>
-                <button onclick="clearAllFilters()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-2.5 rounded-xl text-sm transition" title="Borrar filtros">
-                    <i class="fa-solid fa-eraser"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-slate-100 dark:border-darkBorder overflow-hidden">
-            <div class="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-darkBorder flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <h3 id="table-title" class="font-bold text-slate-800 dark:text-slate-100 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-list text-indigo-600 dark:text-indigo-400"></i> Actividades Activas / Próximas
-                    </h3>
-                    <span id="active-count-badge" class="bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full">0 act.</span>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="openCategoryViewer()" class="bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center space-x-2 border border-indigo-200 dark:border-indigo-700">
-                        <i class="fa-solid fa-chart-pie"></i><span>Resumen Categorías</span>
-                    </button>
-                    <button onclick="toggleCompletedArchive()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium shadow transition flex items-center space-x-2">
-                        <i class="fa-solid fa-box-archive"></i><span id="archive-btn-text">Ver Realizados</span>
-                    </button>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[850px]">
-                    <thead>
-                        <tr class="bg-slate-100/70 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-darkBorder">
-                            <th class="py-3 px-4">Categoría</th>
-                            <th class="py-3 px-4">Actividad y Progreso</th>
-                            <th class="py-3 px-4">Deadline</th>
-                            <th class="py-3 px-4 text-center">Semana</th>
-                            <th class="py-3 px-4 text-center">Estado</th>
-                            <th class="py-3 px-4">Responsable</th>
-                            <th class="py-3 px-4 text-center">Detalles / Notas</th>
-                            <th class="py-3 px-4 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="activities-table-body" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm text-slate-700 dark:text-slate-300"></tbody>
-                </table>
-            </div>
-            <div id="no-results" class="hidden text-center py-12 text-slate-400">
-                <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
-                <p>No se encontraron actividades con los filtros seleccionados.</p>
-            </div>
-        </div>
-    </main>
-
-    <div id="category-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 dark:border-darkBorder my-8">
-            <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
-                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Estado General por Categorías</h3>
-                <button onclick="closeCategoryViewer()" class="text-indigo-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-6">
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Resumen del progreso y estado actual de todas tus áreas de trabajo registradas.</p>
-                <div id="category-stats-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="activity-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 dark:border-darkBorder my-8">
-            <div class="bg-indigo-700 dark:bg-indigo-900 px-6 py-4 flex justify-between items-center text-white">
-                <h3 id="modal-title" class="font-bold text-lg">Nueva Actividad</h3>
-                <button onclick="closeModal()" class="text-indigo-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="activity-form" onsubmit="saveActivity(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                <input type="hidden" id="activity-id">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Categoría</label>
-                        <input type="text" id="form-labor" required placeholder="Ej. CLASES, DOCTORADO..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Descripción de la Actividad</label>
-                        <input type="text" id="form-actividad" required placeholder="Ej. Entrega Informe Final..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Tipo</label>
-                        <select id="form-tipo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                            <option value="TAREA">Tarea</option>
-                            <option value="EVENTO">Evento</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Hora (Opcional)</label>
-                        <input type="time" id="form-hora" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Fecha Deadline</label>
-                        <input type="date" id="form-deadline-date" onchange="handleDeadlineDateChange(this.value)" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                        <input type="hidden" id="form-deadline">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Semana Deadline</label>
-                        <input type="number" id="form-semana" required min="1" max="53" placeholder="Automática" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-600 dark:text-slate-300 font-semibold">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Estado</label>
-                        <select id="form-estado" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                            <option value="PENDIENTE">PENDIENTE</option>
-                            <option value="EN DESARROLLO">EN DESARROLLO</option>
-                            <option value="COMPLETADO">COMPLETADO</option>
-                            <option value="ATRASADO">ATRASADO</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Responsable</label>
-                        <input type="text" id="form-responsable" required placeholder="Ej. Carlos" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">Comentarios / Notas</label>
-                    <textarea id="form-comentarios" rows="2" placeholder="Notas o comentarios opcionales..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100"></textarea>
-                </div>
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Subtareas (Checklist)</label>
-                        <button type="button" onclick="addSubtaskInputInModal()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold"><i class="fa-solid fa-plus"></i> Añadir subtarea</button>
-                    </div>
-                    <div id="form-subtasks-container" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-darkBorder">
-                    <button type="button" onclick="closeModal()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium">Cancelar</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-medium shadow">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="pomodoro-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-darkBorder text-center">
-            <div class="bg-amber-600 dark:bg-amber-800 px-6 py-4 flex justify-between items-center text-white">
-                <h3 class="font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-stopwatch"></i> Temporizador Pomodoro</h3>
-                <button onclick="closePomodoroModal()" class="text-amber-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-6 space-y-6">
-                <div class="flex justify-center space-x-2">
-                    <button onclick="setPomodoroMode('work')" id="pomo-btn-work" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white shadow-sm">Trabajo (25m)</button>
-                    <button onclick="setPomodoroMode('shortBreak')" id="pomo-btn-short" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Pausa Corta (5m)</button>
-                    <button onclick="setPomodoroMode('longBreak')" id="pomo-btn-long" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Pausa Larga (15m)</button>
-                </div>
-                <div class="my-4"><span id="pomo-timer-display" class="text-6xl font-black text-slate-800 dark:text-slate-100 tracking-tight font-mono">25:00</span></div>
-                <div class="flex justify-center space-x-3">
-                    <button onclick="startPomodoro()" id="pomo-start-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow flex items-center gap-2"><i class="fa-solid fa-play"></i> Iniciar</button>
-                    <button onclick="pausePomodoro()" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow flex items-center gap-2"><i class="fa-solid fa-pause"></i> Pausa</button>
-                    <button onclick="resetPomodoro()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold"><i class="fa-solid fa-rotate-right"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 dark:bg-slate-800 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50 border border-slate-700">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-msg" class="text-sm font-medium">Acción realizada con éxito</span>
-    </div>
-
-    <script>
-        const chileHolidays = {
-            '2026-01-01': 'Año Nuevo', '2026-04-03': 'Viernes Santo', '2026-04-04': 'Sábado Santo', '2026-05-01': 'Día del Trabajador',
-            '2026-05-21': 'Glorias Navales', '2026-06-21': 'Pueblos Indígenas', '2026-06-29': 'San Pedro y San Pablo', '2026-07-16': 'Virgen del Carmen',
-            '2026-08-15': 'Asunción de la Virgen', '2026-09-18': 'Independencia Nacional', '2026-09-19': 'Glorias del Ejército', '2026-10-12': 'Encuentro de Dos Mundos',
-            '2026-10-31': 'Iglesias Evangélicas', '2026-11-01': 'Día de Todos los Santos', '2026-12-08': 'Inmaculada Concepción', '2026-12-25': 'Navidad',
-            '2027-01-01': 'Año Nuevo', '2027-03-26': 'Viernes Santo', '2027-05-01': 'Día del Trabajador', '2027-05-21': 'Glorias Navales',
-            '2027-06-21': 'Pueblos Indígenas', '2027-06-28': 'San Pedro y San Pablo', '2027-07-16': 'Virgen del Carmen', '2027-08-15': 'Asunción de la Virgen',
-            '2027-09-18': 'Independencia Nacional', '2027-09-19': 'Glorias del Ejército', '2027-10-11': 'Encuentro de Dos Mundos', '2027-10-31': 'Iglesias Evangélicas',
-            '2027-11-01': 'Día de Todos los Santos', '2027-12-08': 'Inmaculada Concepción', '2027-12-25': 'Navidad'
-        };
-
-        let db, docRef, onSnapshot, setDoc;
-        let activities = [];
-        let stickyNotes = [];
-        let currentTimelineLevel = 'months';
-        let selectedMonth = null;
-        let selectedWeek = null;
-        let showCompletedArchive = false;
-        let calendarYear = 2026;
-        let calendarMonth = 9;
-        let pomoInterval = null;
-        let pomoTimeLeft = 25 * 60;
-        let pomoMode = 'work';
-        let pomoRunning = false;
-        let currentUrgentData = null;
-        let currentOverdueData = null;
+        // Cargar librería de gráficos (Chart.js) e inyectar opción DELEGADO al iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!document.getElementById('chartjs-cdn')) {
+                const script = document.createElement('script');
+                script.id = 'chartjs-cdn';
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                document.head.appendChild(script);
+            }
+            const estadoSelect = document.getElementById('form-estado');
+            if (estadoSelect && !estadoSelect.querySelector('option[value="DELEGADO"]')) {
+                const opt = document.createElement('option');
+                opt.value = 'DELEGADO';
+                opt.textContent = 'DELEGADO';
+                estadoSelect.appendChild(opt);
+            }
+            const catModalBox = document.querySelector('#category-modal > div');
+            if (catModalBox) catModalBox.classList.replace('max-w-2xl', 'max-w-4xl');
+        });
 
         function sanitizeActivities(arr) {
             if (!Array.isArray(arr)) return [];
             const monthsNames = {'jan':'Enero','ene':'Enero','feb':'Febrero','mar':'Marzo','apr':'Abril','abr':'Abril','may':'Mayo','jun':'Junio','jul':'Julio','aug':'Agosto','ago':'Agosto','sep':'Septiembre','oct':'Octubre','nov':'Noviembre','dec':'Diciembre','dic':'Diciembre'};
+            const validStates = ["PENDIENTE", "EN DESARROLLO", "DELEGADO", "COMPLETADO", "ATRASADO"];
             return arr.map((a, idx) => {
                 const dl = String(a.deadline || "16-Oct").trim();
                 const parts = dl.toLowerCase().split('-');
@@ -501,6 +32,7 @@
                 const inferredMes = monthsNames[mKey] || "Octubre";
                 const rawMes = String(a.mes || inferredMes).trim();
                 const cleanMes = rawMes.charAt(0).toUpperCase() + rawMes.slice(1).toLowerCase();
+                const stUpper = String(a.estado || "").toUpperCase();
                 return {
                     id: Number(a.id) || (idx + 1),
                     labor: String(a.labor || "SIN CATEGORÍA").trim().toUpperCase(),
@@ -509,7 +41,7 @@
                     hora: String(a.hora || "").trim(),
                     tipo: (String(a.tipo || "TAREA").toUpperCase() === "EVENTO") ? "EVENTO" : "TAREA",
                     semana: Number(a.semana) || calculateWeekFromDeadline(dl),
-                    estado: ["PENDIENTE","EN DESARROLLO","COMPLETADO","ATRASADO"].includes(String(a.estado || "").toUpperCase()) ? String(a.estado).toUpperCase() : "PENDIENTE",
+                    estado: validStates.includes(stUpper) ? stUpper : "PENDIENTE",
                     responsable: String(a.responsable || "Carlos").trim(),
                     comentarios: String(a.comentarios || "").trim(),
                     mes: cleanMes,
@@ -520,437 +52,12 @@
             });
         }
 
-        function sanitizeNotes(arr) {
-            if (!Array.isArray(arr)) return [];
-            return arr.map((n, idx) => ({
-                id: Number(n.id) || (idx + 1),
-                text: String(n.text || ""),
-                color: String(n.color || "bg-amber-200 dark:bg-amber-900/60 text-slate-900 dark:text-amber-100")
-            }));
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            try {
-                const cached = localStorage.getItem('carlos_gestor_backup_v3');
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (parsed.activities) activities = sanitizeActivities(parsed.activities);
-                    if (parsed.stickyNotes) stickyNotes = sanitizeNotes(parsed.stickyNotes);
-                }
-            } catch (e) { console.warn("Error leyendo caché local:", e); }
-
-            populateFilters();
-            renderDashboard();
-            renderStickyNotes();
-            updateHeaderDate();
-            setInterval(updateDigitalClock, 1000);
-            updateDigitalClock();
-            initFirebase();
-
-            window.addEventListener('click', function(e) {
-                if (!e.target.closest('.dropdown-wrapper')) {
-                    document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
-                }
-            });
-        });
-
-        async function initFirebase() {
-            try {
-                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
-                const firestore = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-                setDoc = firestore.setDoc;
-                onSnapshot = firestore.onSnapshot;
-                const firebaseConfig = {
-                    apiKey: "AIzaSyBbtVeGSyPhu0Y_fo45BJkZRzUEibUvuKk",
-                    authDomain: "dashboard-carolo.firebaseapp.com",
-                    projectId: "dashboard-carolo",
-                    storageBucket: "dashboard-carolo.firebasestorage.app",
-                    messagingSenderId: "751156790806",
-                    appId: "1:751156790806:web:a693c1a686278841395737"
-                };
-                const app = initializeApp(firebaseConfig);
-                db = firestore.getFirestore(app);
-                docRef = firestore.doc(db, "dashboard", "carlosData_oficial");
-                setupRealtimeListeners();
-            } catch (e) {
-                console.warn("Modo local activo (Firebase bloqueado o sin red):", e);
-            }
-        }
-
-        function setupRealtimeListeners() {
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.activities && Array.isArray(data.activities)) activities = sanitizeActivities(data.activities);
-                    if (data.stickyNotes && Array.isArray(data.stickyNotes)) stickyNotes = sanitizeNotes(data.stickyNotes);
-                    try { localStorage.setItem('carlos_gestor_backup_v3', JSON.stringify({ activities, stickyNotes })); } catch(e){}
-                    populateFilters();
-                    renderDashboard();
-                    renderStickyNotes();
-                } else if (activities.length > 0 || stickyNotes.length > 0) {
-                    saveToCloud();
-                }
-            }, (error) => console.error("Error sincronizando con Firebase:", error));
-        }
-
-        async function saveToCloud() {
-            try { localStorage.setItem('carlos_gestor_backup_v3', JSON.stringify({ activities, stickyNotes })); } catch(e){}
-            if (!db || !docRef) return;
-            try {
-                await setDoc(docRef, { activities, stickyNotes, updatedAt: Date.now() });
-            } catch(e) { console.error("Error guardando en Firebase:", e); }
-        }
-
-        function toggleDropdown(id) {
-            const dropdown = document.getElementById(id);
-            const isHidden = dropdown.classList.contains('hidden');
-            document.querySelectorAll('[id$="-dropdown"]').forEach(el => el.classList.add('hidden'));
-            if (isHidden) dropdown.classList.remove('hidden');
-        }
-
-        function updateDigitalClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('digital-clock');
-            if (clockEl) {
-                clockEl.textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            }
-            updateCountdowns();
-        }
-
-        function parseActivityDate(a) {
-            try {
-                if (!a || !a.deadline) return new Date(a?.anio || 2026, 9, 1);
-                const monthsMapInv = {'jan':0,'ene':0,'feb':1,'mar':2,'apr':3,'abr':3,'may':4,'jun':5,'jul':6,'aug':7,'ago':7,'sep':8,'oct':9,'nov':10,'dec':11,'dic':11};
-                const parts = String(a.deadline).toLowerCase().split('-');
-                const day = parseInt(parts[0]) || 1;
-                const mKey = parts[1] ? parts[1].substring(0,3) : 'oct';
-                const month = monthsMapInv[mKey] !== undefined ? monthsMapInv[mKey] : 9;
-                const year = parts[2] ? parseInt(parts[2]) : (a.anio || (month === 0 ? 2027 : 2026));
-                return new Date(year, month, day);
-            } catch(e) { return new Date(2026, 9, 1); }
-        }
-
-        function checkOverdueTasks() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let updated = false;
-            activities.forEach(a => {
-                if (!a.manualStatus && (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO')) {
-                    const taskDate = parseActivityDate(a);
-                    taskDate.setHours(0, 0, 0, 0);
-                    if (taskDate < today) {
-                        a.estado = 'ATRASADO';
-                        updated = true;
-                    }
-                }
-            });
-            if (updated) saveToCloud();
-        }
-
-        function updateHeaderDate() {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-            document.getElementById('header-date-display').textContent = `Hoy es ${capitalizedDate} (2026-2027)`;
-            document.getElementById('current-date-badge').textContent = capitalizedDate;
-            updateTodayWorkloadBox(now);
-        }
-
-        function updateTodayWorkloadBox(todayDate) {
-            const yyyy = todayDate.getFullYear();
-            const mm = String(todayDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(todayDate.getDate()).padStart(2, '0');
-            const todayKey = `${yyyy}-${mm}-${dd}`;
-            const todayActs = activities.filter(a => {
-                const dObj = parseActivityDate(a);
-                return dObj.getFullYear() === yyyy && dObj.getMonth() === todayDate.getMonth() && dObj.getDate() === todayDate.getDate();
-            });
-            const count = todayActs.length;
-            const holidayName = chileHolidays[todayKey];
-            const boxEl = document.getElementById('today-workload-box');
-            const calMonth = document.getElementById('today-cal-month');
-            const calDay = document.getElementById('today-cal-day');
-            const calCount = document.getElementById('today-cal-count');
-            const monthNamesShortEsp = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-            calMonth.textContent = monthNamesShortEsp[todayDate.getMonth()];
-            calDay.textContent = todayDate.getDate();
-            calCount.textContent = count;
-
-            if (holidayName) {
-                boxEl.className = "rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-red-500 text-white border-red-600 relative group flex-shrink-0 cursor-pointer hover:scale-105 font-bold";
-                calCount.className = "text-[8px] px-1 rounded bg-red-700 text-white font-bold";
-            } else if (count >= 3) {
-                boxEl.className = "rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-rose-500 text-white border-rose-600 relative group flex-shrink-0 cursor-pointer hover:scale-105 font-bold";
-                calCount.className = "text-[8px] px-1 rounded bg-rose-700 text-white font-bold";
-            } else if (count === 2) {
-                boxEl.className = "rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-amber-500 text-white border-amber-600 relative group flex-shrink-0 cursor-pointer hover:scale-105 font-bold";
-                calCount.className = "text-[8px] px-1 rounded bg-amber-700 text-white font-bold";
-            } else if (count === 1) {
-                boxEl.className = "rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-emerald-500 text-white border-emerald-600 relative group flex-shrink-0 cursor-pointer hover:scale-105 font-bold";
-                calCount.className = "text-[8px] px-1 rounded bg-emerald-700 text-white font-bold";
-            } else {
-                boxEl.className = "rounded-xl border shadow-lg overflow-hidden flex flex-col items-center justify-between p-1 transition-all duration-300 w-14 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 relative group flex-shrink-0 cursor-pointer hover:scale-105";
-                calCount.className = "text-[8px] px-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold";
-            }
-        }
-
-        function onHeaderCalendarClick() {
-            const now = new Date();
-            const monthsShortEsp = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            const todayStr = `${now.getDate()}-${monthsShortEsp[now.getMonth()]}`;
-            document.getElementById('search-input').value = todayStr;
-            filterActivities();
-            showToast(`Filtrando tareas de hoy (${todayStr})`);
-        }
-
-        function formatDetailedTime(diffMs) {
-            if (isNaN(diffMs)) return "Vence hoy";
-            let totalSecs = Math.floor(Math.abs(diffMs) / 1000);
-            const years = Math.floor(totalSecs / (365 * 24 * 3600)); totalSecs %= (365 * 24 * 3600);
-            const months = Math.floor(totalSecs / (30 * 24 * 3600)); totalSecs %= (30 * 24 * 3600);
-            const weeks = Math.floor(totalSecs / (7 * 24 * 3600)); totalSecs %= (7 * 24 * 3600);
-            const days = Math.floor(totalSecs / (24 * 3600)); totalSecs %= (24 * 3600);
-            const hours = Math.floor(totalSecs / 3600); totalSecs %= 3600;
-            const minutes = Math.floor(totalSecs / 60);
-            const seconds = totalSecs % 60;
-            let parts = [];
-            if (years > 0) parts.push(`${years}a`);
-            if (months > 0) parts.push(`${months}m`);
-            if (weeks > 0) parts.push(`${weeks}sem`);
-            if (days > 0) parts.push(`${days}d`);
-            parts.push(`${String(hours).padStart(2,'0')}h`, `${String(minutes).padStart(2,'0')}m`, `${String(seconds).padStart(2,'0')}s`);
-            return parts.join(' ');
-        }
-
-        function renderUrgentWidget() {
-            const container = document.getElementById('urgent-tasks-container');
-            container.innerHTML = '';
-            const activePendings = activities.filter(a => (a.tipo || 'TAREA') === 'TAREA' && (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO'));
-            if (activePendings.length === 0) {
-                currentUrgentData = null;
-                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-amber-200/50 dark:border-amber-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No hay tareas urgentes pendientes.</div>`;
-                return;
-            }
-            const parsed = activePendings.map(a => ({ ...a, dateObj: parseActivityDate(a) }));
-            parsed.sort((a, b) => a.dateObj - b.dateObj);
-            const closestDateStr = parsed[0].deadline || 'Sin fecha';
-            const closestYear = parsed[0].anio || parsed[0].dateObj.getFullYear();
-            const closestTasks = parsed.filter(item => (item.deadline || 'Sin fecha') === closestDateStr);
-            const targetDate = new Date(parsed[0].dateObj);
-            targetDate.setHours(23, 59, 59, 999);
-            currentUrgentData = { targetDate, closestTasks, closestDateStr, closestYear };
-            updateUrgentCountdown();
-        }
-
-        function updateUrgentCountdown() {
-            if (!currentUrgentData) return;
-            const container = document.getElementById('urgent-tasks-container');
-            const diffTime = currentUrgentData.targetDate - new Date();
-            const countdownStr = diffTime > 0 ? formatDetailedTime(diffTime) : "Vence hoy / Atrasado";
-            container.innerHTML = `
-                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-amber-200 dark:border-amber-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-amber-400 transition cursor-pointer" onclick="filterByDate('${currentUrgentData.closestDateStr}')">
-                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-1.5">
-                        <span class="font-bold text-rose-600 dark:text-rose-400 text-xs flex items-center gap-1.5"><i class="fa-solid fa-calendar-day"></i> Vence: ${currentUrgentData.closestDateStr} (${currentUrgentData.closestYear})</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800 animate-pulse font-mono">${countdownStr}</span>
-                            <span class="bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">${currentUrgentData.closestTasks.length} act.</span>
-                        </div>
-                    </div>
-                    <div class="space-y-1 max-h-[110px] overflow-y-auto scrollbar-thin">
-                        ${currentUrgentData.closestTasks.map(t => `
-                            <div class="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 px-2 py-1 rounded-lg">
-                                <span class="font-medium truncate">• ${t.actividad}</span>
-                                <span class="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold flex-shrink-0">${t.labor}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-        }
-
-        function renderEventsWidget() {
-            const container = document.getElementById('events-tasks-container');
-            const titleEl = document.getElementById('events-widget-title');
-            const descEl = document.getElementById('events-widget-desc');
-            const countBadge = document.getElementById('events-count-badge');
-            container.innerHTML = '';
-            const activeEvents = activities.filter(a => a.tipo === 'EVENTO' && a.estado !== 'COMPLETADO');
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            const parsedEvents = activeEvents.map(a => ({ ...a, dateObj: parseActivityDate(a) })).sort((a, b) => a.dateObj - b.dateObj);
-            let displayEvents = parsedEvents.filter(e => e.dateObj.getTime() === today.getTime());
-            let isToday = true;
-            if (displayEvents.length === 0) {
-                isToday = false;
-                const futureEvents = parsedEvents.filter(e => e.dateObj > today);
-                if (futureEvents.length > 0) {
-                    const closestDateObj = futureEvents[0].dateObj;
-                    displayEvents = futureEvents.filter(e => e.dateObj.getTime() === closestDateObj.getTime());
-                }
-            }
-            countBadge.textContent = displayEvents.length;
-            if (displayEvents.length === 0) {
-                titleEl.textContent = "Eventos Activos";
-                descEl.textContent = "No hay eventos pendientes agendados.";
-                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-sky-200/50 dark:border-sky-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No tienes eventos registrados.</div>`;
-                return;
-            }
-            titleEl.textContent = isToday ? "Eventos de Hoy" : "Próximos Eventos";
-            descEl.textContent = isToday ? "Tus eventos programados para la jornada." : "No hay eventos hoy. Próximos en agenda:";
-            container.innerHTML = `
-                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-sky-200 dark:border-sky-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-sky-400 transition cursor-pointer" onclick="filterByDate('${displayEvents[0].deadline || ''}')">
-                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-1.5">
-                        <span class="font-bold text-sky-600 dark:text-sky-400 text-xs flex items-center gap-1.5"><i class="fa-solid fa-calendar-check"></i> ${displayEvents[0].deadline || ''} (${displayEvents[0].anio || displayEvents[0].dateObj.getFullYear()})</span>
-                    </div>
-                    <div class="space-y-1.5 max-h-[110px] overflow-y-auto scrollbar-thin">
-                        ${displayEvents.map(e => `
-                            <div class="flex items-center justify-between gap-2 text-slate-700 dark:text-slate-300 bg-sky-50/50 dark:bg-sky-950/20 px-2.5 py-1.5 rounded-lg">
-                                <span class="font-medium truncate flex-1">• ${e.actividad}</span>
-                                ${e.hora ? `<span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700"><i class="fa-regular fa-clock"></i> ${e.hora}</span>` : ''}
-                                <span class="text-[8px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-semibold uppercase">${e.labor}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-        }
-
-        function renderOverdueWidget() {
-            const container = document.getElementById('overdue-tasks-container');
-            const countBadge = document.getElementById('overdue-count-badge');
-            container.innerHTML = '';
-            const overdueTasks = activities.filter(a => a.estado === 'ATRASADO').sort((a, b) => parseActivityDate(a) - parseActivityDate(b));
-            countBadge.textContent = overdueTasks.length;
-            if (overdueTasks.length === 0) {
-                currentOverdueData = [];
-                container.innerHTML = `<div class="bg-white/85 dark:bg-darkCard/85 px-3 py-2.5 rounded-xl border border-rose-200/50 dark:border-rose-900/30 text-xs text-slate-500 dark:text-slate-400 italic">No hay actividades atrasadas. ¡Excelente trabajo!</div>`;
-                return;
-            }
-            currentOverdueData = overdueTasks;
-            updateOverdueCounters();
-        }
-
-        function updateOverdueCounters() {
-            if (!currentOverdueData || currentOverdueData.length === 0) return;
-            const container = document.getElementById('overdue-tasks-container');
-            const now = new Date();
-            container.innerHTML = `
-                <div class="bg-white dark:bg-darkCard p-3 rounded-xl border border-rose-200 dark:border-rose-800/80 shadow-sm text-xs flex flex-col gap-2 w-full hover:border-rose-400 transition cursor-pointer" onclick="filterByOverdue()">
-                    <div class="space-y-1.5 max-h-[125px] overflow-y-auto scrollbar-thin">
-                        ${currentOverdueData.map(t => {
-                            const tDate = parseActivityDate(t); tDate.setHours(23, 59, 59, 999);
-                            const diffMs = now - tDate;
-                            const delayStr = diffMs > 0 ? formatDetailedTime(diffMs) : "Atrasada hoy";
-                            return `
-                                <div class="flex flex-col gap-1 text-slate-700 dark:text-slate-300 bg-rose-50/50 dark:bg-rose-950/20 px-2.5 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/40">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <div class="truncate"><span class="font-bold text-rose-600 dark:text-rose-400 mr-1">[${t.deadline}]</span><span class="font-medium">${t.actividad}</span></div>
-                                        <span class="text-[9px] bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 px-1.5 py-0.5 rounded font-semibold flex-shrink-0">${t.labor}</span>
-                                    </div>
-                                    <div class="flex items-center justify-between text-[10px] text-rose-600 dark:text-rose-400 font-mono font-bold">
-                                        <span>Retraso:</span><span>+${delayStr}</span>
-                                    </div>
-                                </div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
-        }
-
-        function updateCountdowns() {
-            updateUrgentCountdown();
-            updateOverdueCounters();
-        }
-
-        function filterByDate(dateStr) {
-            document.getElementById('search-input').value = dateStr;
-            filterActivities();
-        }
-
-        function filterByOverdue() {
-            document.querySelectorAll('.estado-checkbox').forEach(cb => { cb.checked = (cb.value === 'ATRASADO'); });
-            updateDropdownButtonLabels();
-            filterActivities();
-        }
-
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            html.classList.toggle('dark', !isDark);
-            html.classList.toggle('light', isDark);
-            const iconClass = isDark ? "fa-solid fa-moon" : "fa-solid fa-sun";
-            document.getElementById('mobile-dark-icon').className = iconClass;
-            document.getElementById('desktop-dark-icon').className = iconClass;
-        }
-
-        function toggleCompletedArchive() {
-            showCompletedArchive = !showCompletedArchive;
-            document.getElementById('archive-btn-text').textContent = showCompletedArchive ? "Ver Actividades Activas" : "Ver Realizados";
-            document.getElementById('table-title').innerHTML = showCompletedArchive
-                ? `<i class="fa-solid fa-box-archive text-indigo-600 dark:text-indigo-400"></i> Historial de Realizados (Completados)`
-                : `<i class="fa-solid fa-list text-indigo-600 dark:text-indigo-400"></i> Actividades Activas / Próximas`;
-            renderDashboard();
-        }
-
-        function isMonthCompletedAndPast(mesName) {
-            const monthOrder = ["Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre", "Enero"];
-            const mIndex = monthOrder.indexOf(mesName);
-            if (mIndex !== -1 && mIndex < 2) {
-                const monthActs = activities.filter(a => (a.mes || "Octubre") === mesName);
-                if (monthActs.length > 0 && monthActs.every(a => a.estado === 'COMPLETADO')) return true;
-            }
-            return false;
-        }
-
-        function calculateWeekFromDeadline(deadlineStr) {
-            if (!deadlineStr) return 1;
-            const parts = String(deadlineStr).toLowerCase().split('-');
-            if (parts.length < 2) return 1;
-            const day = parseInt(parts[0]) || 1;
-            const monthsMap = {'jan':0,'ene':0,'feb':1,'mar':2,'apr':3,'abr':3,'may':4,'jun':5,'jul':6,'aug':7,'ago':7,'sep':8,'oct':9,'nov':10,'dec':11,'dic':11};
-            const month = monthsMap[parts[1].substring(0,3)] !== undefined ? monthsMap[parts[1].substring(0,3)] : 9;
-            let year = parts.length >= 3 ? (parseInt(parts[2]) || (month === 0 ? 2027 : 2026)) : (month === 0 ? 2027 : 2026);
-            return getISOWeekNumber(new Date(year, month, day));
-        }
-
-        function getISOWeekNumber(date) {
-            if (!date || isNaN(date.getTime())) return 1;
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-
-        function getWeekDates(year, weekNum) {
-            weekNum = Number(weekNum) || 1;
-            year = Number(year) || 2026;
-            const simple = new Date(year, 0, 1 + (weekNum - 1) * 7);
-            const dow = simple.getDay();
-            const ISOweekStart = new Date(simple);
-            if (dow <= 4) ISOweekStart.setDate(simple.getDate() - dow + 1);
-            else ISOweekStart.setDate(simple.getDate() + 8 - dow);
-            const ISOweekEnd = new Date(ISOweekStart);
-            ISOweekEnd.setDate(ISOweekStart.getDate() + 6);
-            const options = { day: 'numeric', month: 'short' };
-            return `${ISOweekStart.toLocaleDateString('es-ES', options)} - ${ISOweekEnd.toLocaleDateString('es-ES', options)}`;
-        }
-
-        function handleDeadlineDateChange(dateValue) {
-            if (!dateValue) return;
-            const [yearStr, monthStr, dayStr] = dateValue.split('-');
-            const year = parseInt(yearStr);
-            const monthIdx = parseInt(monthStr) - 1;
-            const day = parseInt(dayStr);
-            const monthsShortEsp = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            let deadlineDisplay = `${day}-${monthsShortEsp[monthIdx]}`;
-            if (year === 2027) deadlineDisplay += `-2027`;
-            document.getElementById('form-deadline').value = deadlineDisplay;
-            document.getElementById('form-semana').value = calculateWeekFromDeadline(deadlineDisplay);
-        }
-
         function populateFilters() {
             const laborContainer = document.getElementById('labor-checkboxes');
             const estadoContainer = document.getElementById('estado-checkboxes');
             const semanaContainer = document.getElementById('semana-checkboxes');
             const labores = [...new Set(activities.map(a => a.labor || "SIN CATEGORÍA"))].sort();
-            const estados = ["PENDIENTE", "EN DESARROLLO", "COMPLETADO", "ATRASADO"];
+            const estados = ["PENDIENTE", "EN DESARROLLO", "DELEGADO", "COMPLETADO", "ATRASADO"];
             const semanas = [...new Set(activities.map(a => Number(a.semana) || 1))].sort((a,b) => a - b);
 
             laborContainer.innerHTML = labores.map(l => `
@@ -968,432 +75,79 @@
             updateDropdownButtonLabels();
         }
 
-        function selectAll(type, check) {
-            document.querySelectorAll(`.${type}-checkbox`).forEach(cb => cb.checked = check);
-            filterActivities();
-        }
-
-        function updateDropdownButtonLabels() {
-            const lChecked = document.querySelectorAll('.labor-checkbox:checked');
-            const lTotal = document.querySelectorAll('.labor-checkbox').length;
-            document.getElementById('labor-btn-label').textContent = (lChecked.length === lTotal || lChecked.length === 0) ? "Categorías (Todas)" : (lChecked.length === 1 ? lChecked[0].value : `${lChecked.length} Categorías`);
-
-            const eChecked = document.querySelectorAll('.estado-checkbox:checked');
-            const eTotal = document.querySelectorAll('.estado-checkbox').length;
-            document.getElementById('estado-btn-label').textContent = (eChecked.length === eTotal || eChecked.length === 0) ? "Estados (Todos)" : (eChecked.length === 1 ? eChecked[0].value : `${eChecked.length} Estados`);
-
-            const sChecked = document.querySelectorAll('.semana-checkbox:checked');
-            const sTotal = document.querySelectorAll('.semana-checkbox').length;
-            document.getElementById('semana-btn-label').textContent = (sChecked.length === sTotal || sChecked.length === 0) ? "Semanas (Todas)" : (sChecked.length === 1 ? `Semana ${sChecked[0].value}` : `${sChecked.length} Semanas`);
-        }
-
-        function clearAllFilters() {
-            document.getElementById('search-input').value = '';
-            selectAll('labor', true);
-            selectAll('estado', true);
-            selectAll('semana', true);
-            filterActivities();
-            showToast("Filtros restablecidos");
-        }
-
-        function renderDashboard() {
-            try { checkOverdueTasks(); } catch(e){ console.error(e); }
-            try { updateKPIs(); } catch(e){ console.error(e); }
-            try { renderTimeline(); } catch(e){ console.error(e); }
-            try { renderCalendar(); } catch(e){ console.error(e); }
-            try { filterActivities(); } catch(e){ console.error(e); }
-            try { renderUrgentWidget(); } catch(e){ console.error(e); }
-            try { renderOverdueWidget(); } catch(e){ console.error(e); }
-            try { renderEventsWidget(); } catch(e){ console.error(e); }
-            try { updateTodayWorkloadBox(new Date()); } catch(e){ console.error(e); }
-        }
-
-        function updateKPIs() {
-            document.getElementById('kpi-total').textContent = activities.length;
-            document.getElementById('kpi-pendientes').textContent = activities.filter(a => a.estado === 'PENDIENTE').length;
-            document.getElementById('kpi-desarrollo').textContent = activities.filter(a => a.estado === 'EN DESARROLLO').length;
-            document.getElementById('kpi-completado').textContent = activities.filter(a => a.estado === 'COMPLETADO').length;
-            document.getElementById('kpi-atrasado').textContent = activities.filter(a => a.estado === 'ATRASADO').length;
-        }
-
-        function getWorkloadBadge(count, level) {
-            const high = level === 'months' ? 20 : (level === 'weeks' ? 5 : 3);
-            const med = level === 'months' ? 11 : (level === 'weeks' ? 3 : 2);
-            if (count >= high) return { border: 'border-rose-400 dark:border-rose-700/80 shadow-md', dot: 'bg-rose-500 animate-pulse', label: `Carga Alta (${count} act.)`, headerBg: 'bg-rose-600 text-white' };
-            if (count >= med) return { border: 'border-amber-400 dark:border-amber-700/80 shadow-md', dot: 'bg-amber-500', label: `Carga Media (${count} act.)`, headerBg: 'bg-amber-600 text-white' };
-            return { border: 'border-emerald-300 dark:border-emerald-700/80 shadow-md', dot: 'bg-emerald-500', label: `Carga Baja (${count} act.)`, headerBg: 'bg-emerald-600 text-white' };
-        }
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline-container');
-            const breadcrumb = document.getElementById('timeline-breadcrumb');
-            const breadcrumbText = document.getElementById('breadcrumb-text');
-            const subtitle = document.getElementById('timeline-subtitle');
-            container.innerHTML = '';
-
-            if (currentTimelineLevel === 'months') {
-                breadcrumb.classList.add('hidden'); breadcrumb.classList.remove('flex');
-                subtitle.textContent = "Explora tus periodos de estudio. Haz clic en un mes para profundizar.";
-                const monthOrder = ["Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio"];
-                const counts = {};
-                activities.forEach(a => {
-                    let mRaw = String(a.mes || "Octubre").trim();
-                    let mName = mRaw.charAt(0).toUpperCase() + mRaw.slice(1).toLowerCase();
-                    if (!monthOrder.includes(mName)) mName = "Octubre";
-                    counts[mName] = (counts[mName] || 0) + 1;
-                });
-                monthOrder.forEach(mes => {
-                    const total = counts[mes] || 0;
-                    if (total === 0) return;
-                    if (!showCompletedArchive && isMonthCompletedAndPast(mes)) return;
-                    const workload = getWorkloadBadge(total, 'months');
-                    const div = document.createElement('div');
-                    div.className = `flex-shrink-0 w-60 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between ${workload.border} hover:-translate-y-1 group overflow-hidden bg-white dark:bg-darkCard`;
-                    div.onclick = () => { selectedMonth = mes; currentTimelineLevel = 'weeks'; renderTimeline(); };
-                    div.innerHTML = `
-                        <div>
-                            <div class="${workload.headerBg} px-4 py-3 flex items-center justify-between"><span class="text-xs font-black uppercase">${mes}</span><span class="w-3.5 h-3.5 rounded-full ${workload.dot} ring-2 ring-white/80"></span></div>
-                            <div class="p-4 my-1">
-                                <div class="flex items-baseline gap-1.5"><span class="text-3xl font-black text-slate-800 dark:text-slate-100">${total}</span><span class="text-xs font-semibold text-slate-500">actividades</span></div>
-                                <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mt-2 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">${workload.label}</p>
-                            </div>
-                        </div>
-                        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-darkBorder text-xs font-extrabold flex items-center justify-between text-indigo-600 dark:text-indigo-400">
-                            <span>Ver semanas</span><i class="fa-solid fa-arrow-right"></i>
-                        </div>`;
-                    container.appendChild(div);
-                });
-            } else if (currentTimelineLevel === 'weeks') {
-                breadcrumb.classList.remove('hidden'); breadcrumb.classList.add('flex');
-                breadcrumbText.textContent = `Mes: ${selectedMonth}`;
-                const monthActs = activities.filter(a => {
-                    let mRaw = String(a.mes || "Octubre").trim();
-                    return (mRaw.charAt(0).toUpperCase() + mRaw.slice(1).toLowerCase()) === selectedMonth;
-                });
-                const weekMap = {};
-                monthActs.forEach(a => {
-                    let sem = Number(a.semana) || 1;
-                    if (!weekMap[sem]) weekMap[sem] = { count: 0, year: a.anio || 2026 };
-                    weekMap[sem].count++;
-                });
-                Object.keys(weekMap).map(Number).sort((a,b) => a - b).forEach(sem => {
-                    const data = weekMap[sem];
-                    const workload = getWorkloadBadge(data.count, 'weeks');
-                    const dateRangeStr = getWeekDates(data.year, sem);
-                    const div = document.createElement('div');
-                    div.className = `flex-shrink-0 w-64 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between ${workload.border} hover:-translate-y-1 overflow-hidden bg-white dark:bg-darkCard`;
-                    div.onclick = () => {
-                        selectedWeek = sem; currentTimelineLevel = 'days'; renderTimeline();
-                        document.querySelectorAll('.semana-checkbox').forEach(cb => cb.checked = (cb.value === String(sem)));
-                        updateDropdownButtonLabels(); filterActivities();
-                    };
-                    div.innerHTML = `
-                        <div>
-                            <div class="${workload.headerBg} px-4 py-3 flex items-center justify-between"><span class="text-xs font-black uppercase">Semana ${sem}</span><span class="w-3.5 h-3.5 rounded-full ${workload.dot} ring-2 ring-white/80"></span></div>
-                            <div class="p-4">
-                                <div class="text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl mb-2 text-center">${dateRangeStr}</div>
-                                <div class="flex items-baseline gap-1.5"><span class="text-3xl font-black text-slate-800 dark:text-slate-100">${data.count}</span><span class="text-xs font-semibold text-slate-500">actividades</span></div>
-                            </div>
-                        </div>
-                        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-darkBorder text-xs font-extrabold flex items-center justify-between text-indigo-600 dark:text-indigo-400">
-                            <span>Ver días</span><i class="fa-solid fa-arrow-right"></i>
-                        </div>`;
-                    container.appendChild(div);
-                });
-            } else if (currentTimelineLevel === 'days') {
-                breadcrumb.classList.remove('hidden'); breadcrumb.classList.add('flex');
-                breadcrumbText.textContent = `${selectedMonth} ➔ Semana ${selectedWeek}`;
-                const weekActs = activities.filter(a => (Number(a.semana) || 1) === selectedWeek);
-                const dayMap = {};
-                weekActs.forEach(a => {
-                    const key = `${a.deadline || 'Sin Fecha'} (${a.anio || 2026})`;
-                    if (!dayMap[key]) dayMap[key] = [];
-                    dayMap[key].push(a);
-                });
-                Object.keys(dayMap).forEach(dayKey => {
-                    const dayActs = dayMap[dayKey];
-                    const workload = getWorkloadBadge(dayActs.length, 'days');
-                    const div = document.createElement('div');
-                    div.className = `flex-shrink-0 w-64 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between ${workload.border} overflow-hidden bg-white dark:bg-darkCard`;
-                    div.onclick = () => {
-                        document.getElementById('search-input').value = dayActs[0].deadline || '';
-                        filterActivities();
-                    };
-                    div.innerHTML = `
-                        <div>
-                            <div class="${workload.headerBg} px-4 py-3 flex items-center justify-between"><span class="text-xs font-black uppercase">${dayKey}</span></div>
-                            <div class="p-4 space-y-1.5 max-h-36 overflow-y-auto scrollbar-thin">
-                                ${dayActs.map(da => `<div class="bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl text-[11px] font-semibold truncate">• ${da.actividad}</div>`).join('')}
-                            </div>
-                        </div>
-                        <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-darkBorder text-xs font-extrabold flex items-center justify-between text-indigo-600 dark:text-indigo-400">
-                            <span>Filtrar en tabla</span><i class="fa-solid fa-filter"></i>
-                        </div>`;
-                    container.appendChild(div);
-                });
+        function toggleDetailRow(id) {
+            const numId = Number(id);
+            const row = document.getElementById(`detail-row-${numId}`);
+            if (!row) return;
+            const willHide = !row.classList.contains('hidden');
+            row.classList.toggle('hidden', willHide);
+            if (willHide) {
+                window.openDetailRows.delete(numId);
+            } else {
+                window.openDetailRows.add(numId);
+                setTimeout(() => document.getElementById(`new-subtask-input-${numId}`)?.focus(), 40);
             }
         }
 
-        function resetTimelineView() {
-            currentTimelineLevel = 'months'; selectedMonth = null; selectedWeek = null;
-            clearAllFilters(); renderTimeline();
-        }
-
-        function renderCalendar() {
-            const grid = document.getElementById('calendar-grid');
-            const label = document.getElementById('calendar-month-label');
-            grid.innerHTML = '';
-            const monthNamesShort = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-            const monthNamesFull = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-            label.textContent = `${monthNamesShort[calendarMonth]} ${calendarYear}`;
-
-            const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
-            const startOffset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
-            const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-            const actsByDate = {};
-            const actsByWeek = {};
-
-            activities.forEach(a => {
-                const dObj = parseActivityDate(a);
-                const wNum = a.semana || getISOWeekNumber(dObj);
-                actsByWeek[wNum] = (actsByWeek[wNum] || 0) + 1;
-                if (dObj.getFullYear() === calendarYear && dObj.getMonth() === calendarMonth) {
-                    const key = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
-                    if (!actsByDate[key]) actsByDate[key] = [];
-                    actsByDate[key].push(a);
-                }
-            });
-
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            let currentDay = 1;
-            let totalRows = Math.ceil((startOffset + daysInMonth) / 7);
-            let cellIndex = 0;
-
-            for (let r = 0; r < totalRows; r++) {
-                let sampleDay = (r === 0) ? 1 : Math.min(daysInMonth, Math.max(1, (r * 7) - startOffset + 1));
-                let rowWeekNum = getISOWeekNumber(new Date(calendarYear, calendarMonth, sampleDay));
-                const weekCount = actsByWeek[rowWeekNum] || 0;
-                let weekCellBg = weekCount >= 5 ? 'bg-rose-600 text-white font-bold' : (weekCount >= 3 ? 'bg-amber-500 text-white font-bold' : (weekCount > 0 ? 'bg-emerald-500 text-white font-bold' : 'bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'));
-                const weekCell = document.createElement('div');
-                weekCell.className = `h-9 sm:h-10 rounded-lg flex flex-col items-center justify-center text-[9px] font-bold border transition cursor-pointer ${weekCellBg}`;
-                weekCell.innerHTML = `<span>W${rowWeekNum}</span>${weekCount > 0 ? `<span class="text-[7px] opacity-90">${weekCount}a</span>` : ''}`;
-                weekCell.onclick = () => {
-                    document.querySelectorAll('.semana-checkbox').forEach(cb => cb.checked = (cb.value === String(rowWeekNum)));
-                    updateDropdownButtonLabels(); filterActivities(); showToast(`Filtrando por Semana ${rowWeekNum}`);
-                };
-                grid.appendChild(weekCell);
-
-                for (let c = 0; c < 7; c++) {
-                    if (cellIndex < startOffset || currentDay > daysInMonth) {
-                        const emptyCell = document.createElement('div');
-                        emptyCell.className = 'h-9 sm:h-10 bg-slate-100/30 dark:bg-slate-900/20 rounded-lg opacity-20';
-                        grid.appendChild(emptyCell);
-                    } else {
-                        const day = currentDay;
-                        const dateKey = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                        const dayActs = actsByDate[dateKey] || [];
-                        const count = dayActs.length;
-                        const holidayName = chileHolidays[dateKey];
-                        const cellDate = new Date(calendarYear, calendarMonth, day); cellDate.setHours(0,0,0,0);
-                        const isToday = cellDate.getTime() === today.getTime();
-                        let cellBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-darkBorder text-slate-700 dark:text-slate-300';
-                        let countBadgeStyle = 'text-slate-400';
-
-                        if (holidayName) {
-                            cellBg = 'bg-red-100 dark:bg-red-950/75 border-red-400 text-red-900 dark:text-red-200 font-bold';
-                            countBadgeStyle = 'text-red-600 bg-red-200 px-1 rounded';
-                        } else if (count >= 3) {
-                            cellBg = 'bg-rose-500 text-white font-bold border-rose-600'; countBadgeStyle = 'text-white bg-rose-700/80 px-1 rounded';
-                        } else if (count === 2) {
-                            cellBg = 'bg-amber-500 text-white font-bold border-amber-600'; countBadgeStyle = 'text-white bg-amber-700/80 px-1 rounded';
-                        } else if (count === 1) {
-                            cellBg = 'bg-emerald-500 text-white font-bold border-emerald-600'; countBadgeStyle = 'text-white bg-emerald-700/80 px-1 rounded';
-                        }
-                        if (isToday) cellBg += ' ring-2 ring-indigo-500 z-10';
-
-                        const cell = document.createElement('div');
-                        cell.className = `h-9 sm:h-10 p-0.5 rounded-lg border flex flex-col items-center justify-between transition cursor-pointer text-[10px] ${cellBg}`;
-                        cell.title = `${day} de ${monthNamesFull[calendarMonth]} ${calendarYear}${holidayName ? ' - ' + holidayName : ''}`;
-                        cell.onclick = () => {
-                            if (count > 0) {
-                                document.getElementById('search-input').value = dayActs[0].deadline || '';
-                                filterActivities(); showToast(`Filtrando día ${day} (${count} act.)`);
-                            } else if (holidayName) {
-                                showToast(`Feriado: ${holidayName}`, "indigo");
-                            }
-                        };
-                        cell.innerHTML = `
-                            <span class="text-[7px] uppercase font-bold opacity-80 leading-none pt-0.5">${monthNamesShort[calendarMonth]}</span>
-                            <div class="flex items-center justify-between w-full px-1 pb-0.5">
-                                <span class="text-[10px] ${isToday ? 'font-extrabold underline' : ''}">${day}</span>
-                                ${count > 0 ? `<span class="text-[8px] ${countBadgeStyle}">${count}</span>` : ''}
-                            </div>`;
-                        grid.appendChild(cell);
-                        currentDay++;
-                    }
-                    cellIndex++;
-                }
+        function addSubtaskInline(activityId) {
+            const numId = Number(activityId);
+            const input = document.getElementById(`new-subtask-input-${numId}`);
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+            const act = activities.find(a => Number(a.id) === numId);
+            if (act) {
+                if (!act.subtasks) act.subtasks = [];
+                act.subtasks.push({ text, completed: false });
+                window.openDetailRows.add(numId);
+                saveToCloud();
+                renderDashboard();
+                setTimeout(() => {
+                    const newInput = document.getElementById(`new-subtask-input-${numId}`);
+                    if (newInput) newInput.focus();
+                }, 40);
+                showToast("Subtarea añadida");
             }
         }
 
-        function changeCalendarMonth(dir) {
-            calendarMonth += dir;
-            if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
-            else if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
-            renderCalendar();
-        }
-
-        function goToCurrentMonth() {
-            const now = new Date();
-            calendarYear = now.getFullYear(); calendarMonth = now.getMonth();
-            renderCalendar(); showToast("Calendario en el mes actual");
-        }
-
-        function filterTodayTasks() {
-            onHeaderCalendarClick();
-        }
-
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ activities, stickyNotes }, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "gestor_actividades_carlos_respaldo.json");
-            dlAnchorElem.click();
-            showToast("Respaldo JSON exportado con éxito");
-        }
-
-        function exportExcel() {
-            if (typeof XLSX === 'undefined') { showToast("Cargando librería Excel...", "rose"); return; }
-            const dataToExport = activities.map(a => ({
-                "ID": a.id, "Tipo": a.tipo || 'TAREA', "Categoría": a.labor || '', "Actividad": a.actividad || '',
-                "Deadline": a.deadline || '', "Hora": a.hora || '', "Mes": a.mes || '', "Año": a.anio || '',
-                "Semana": a.semana || '', "Estado": a.estado || '', "Responsable": a.responsable || '', "Notas": a.comentarios || ''
-            }));
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Mis Actividades");
-            XLSX.writeFile(workbook, "Dashboard_Actividades_Carlos.xlsx");
-            showToast("Plantilla Excel descargada", "emerald");
-        }
-
-        function triggerImport() {
-            const input = document.getElementById('import-file-input');
-            input.value = '';
-            input.click();
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if (Array.isArray(parsed)) {
-                        activities = sanitizeActivities(parsed);
-                    } else {
-                        if (parsed.activities) activities = sanitizeActivities(parsed.activities);
-                        if (parsed.stickyNotes) stickyNotes = sanitizeNotes(parsed.stickyNotes);
-                    }
-                    populateFilters();
-                    renderDashboard();
-                    renderStickyNotes();
-                    await saveToCloud();
-                    showToast(`¡${activities.length} actividades importadas y guardadas!`, "emerald");
-                } catch(err) {
-                    console.error("Error al procesar JSON:", err);
-                    showToast("El archivo seleccionado no es un JSON válido", "rose");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function renderStickyNotes() {
-            const container = document.getElementById('sticky-notes-container');
-            container.innerHTML = '';
-            const colors = [
-                'bg-amber-200 dark:bg-amber-900/60 text-slate-900 dark:text-amber-100',
-                'bg-yellow-200 dark:bg-yellow-900/60 text-slate-900 dark:text-yellow-100',
-                'bg-lime-200 dark:bg-lime-900/60 text-slate-900 dark:text-lime-100',
-                'bg-emerald-200 dark:bg-emerald-900/60 text-slate-900 dark:text-emerald-100'
-            ];
-            stickyNotes.forEach((note, index) => {
-                const colorClass = note.color || colors[index % colors.length];
-                const div = document.createElement('div');
-                div.className = `${colorClass} p-4 rounded-2xl post-it-shadow flex flex-col justify-between h-40 relative group`;
-                div.innerHTML = `
-                    <textarea onchange="updateStickyNote(${note.id}, this.value)" class="w-full h-24 bg-transparent resize-none focus:outline-none post-it-font text-lg font-bold leading-snug">${note.text || ''}</textarea>
-                    <div class="flex justify-between items-center pt-2 border-t border-black/10 dark:border-white/10">
-                        <span class="text-[10px] opacity-75 font-mono">Post-it #${note.id}</span>
-                        <button onclick="deleteStickyNote(${note.id})" class="text-rose-700 dark:text-rose-400 hover:scale-110 transition text-xs"><i class="fa-solid fa-trash"></i></button>
-                    </div>`;
-                container.appendChild(div);
-            });
-        }
-
-        function addStickyNote() {
-            const newId = stickyNotes.length > 0 ? Math.max(...stickyNotes.map(n => Number(n.id) || 0)) + 1 : 1;
-            stickyNotes.push({ id: newId, text: "Nueva nota rápida...", color: "bg-amber-200 dark:bg-amber-900/60 text-slate-900 dark:text-amber-100" });
-            saveToCloud(); renderStickyNotes(); showToast("Post-it añadido");
-        }
-
-        function updateStickyNote(id, text) {
-            const note = stickyNotes.find(n => n.id == id);
-            if (note) { note.text = text; saveToCloud(); }
-        }
-
-        function deleteStickyNote(id) {
-            stickyNotes = stickyNotes.filter(n => n.id != id);
-            saveToCloud(); renderStickyNotes(); showToast("Nota eliminada", "rose");
-        }
-
-        function getSubtaskProgress(activity) {
-            if (!activity.subtasks || activity.subtasks.length === 0) return null;
-            const completed = activity.subtasks.filter(st => st.completed).length;
-            const total = activity.subtasks.length;
-            return { completed, total, percent: Math.round((completed / total) * 100) };
+        function removeSubtaskInline(activityId, sIdx) {
+            const numId = Number(activityId);
+            const act = activities.find(a => Number(a.id) === numId);
+            if (act && act.subtasks) {
+                act.subtasks.splice(sIdx, 1);
+                window.openDetailRows.add(numId);
+                saveToCloud();
+                renderDashboard();
+                showToast("Subtarea eliminada");
+            }
         }
 
         function toggleSubtask(activityId, subtaskIndex) {
-            const act = activities.find(a => a.id == activityId);
+            const numId = Number(activityId);
+            const act = activities.find(a => Number(a.id) === numId);
             if (act && act.subtasks && act.subtasks[subtaskIndex]) {
                 act.subtasks[subtaskIndex].completed = !act.subtasks[subtaskIndex].completed;
+                window.openDetailRows.add(numId);
                 const prog = getSubtaskProgress(act);
                 if (prog && prog.percent === 100) {
-                    act.estado = 'COMPLETADO'; act.manualStatus = true;
-                    showToast("¡100% completado! Trasladada a Realizados", "emerald");
+                    showToast("¡Subtareas al 100%! Puedes pasar el estado a COMPLETADO cuando gustes.", "emerald");
                 }
-                saveToCloud(); renderDashboard();
+                saveToCloud();
+                renderDashboard();
             }
         }
 
-        function filterActivities() {
-            const search = String(document.getElementById('search-input').value || '').toLowerCase();
-            const selectedLabores = Array.from(document.querySelectorAll('.labor-checkbox:checked')).map(cb => cb.value);
-            const selectedEstados = Array.from(document.querySelectorAll('.estado-checkbox:checked')).map(cb => cb.value);
-            const selectedSemanas = Array.from(document.querySelectorAll('.semana-checkbox:checked')).map(cb => Number(cb.value));
-
-            const filtered = activities.filter(a => {
-                const isComp = a.estado === 'COMPLETADO';
-                if (!showCompletedArchive && isComp) return false;
-                if (showCompletedArchive && !isComp) return false;
-
-                const matchSubtasks = a.subtasks && a.subtasks.some(st => String(st.text || "").toLowerCase().includes(search));
-                const matchSearch = String(a.actividad || "").toLowerCase().includes(search) ||
-                                    String(a.responsable || "").toLowerCase().includes(search) ||
-                                    String(a.labor || "").toLowerCase().includes(search) ||
-                                    String(a.deadline || "").toLowerCase().includes(search) ||
-                                    String(a.comentarios || "").toLowerCase().includes(search) || matchSubtasks;
-
-                const matchLabor = selectedLabores.length === 0 || selectedLabores.includes(a.labor || "SIN CATEGORÍA");
-                const matchEstado = selectedEstados.length === 0 || selectedEstados.includes(a.estado);
-                const matchSemana = selectedSemanas.length === 0 || selectedSemanas.includes(Number(a.semana) || 1);
-                return matchSearch && matchLabor && matchEstado && matchSemana;
-            });
-
-            filtered.sort((a, b) => parseActivityDate(a) - parseActivityDate(b));
-            updateDropdownButtonLabels();
-            renderTable(filtered);
+        function addSubtaskInputInModal(text = '', completed = false) {
+            const container = document.getElementById('form-subtasks-container');
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 modal-subtask-item';
+            div.innerHTML = `
+                <input type="checkbox" ${completed ? 'checked' : ''} class="rounded text-indigo-600 h-4 w-4 subtask-check">
+                <input type="text" value="${text}" onkeydown="if(event.key==='Enter'){event.preventDefault(); addSubtaskInputInModal();}" placeholder="Escribe subtarea y presiona Enter..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-lg px-3 py-1.5 text-xs subtask-text">
+                <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-rose-500 px-1 text-xs"><i class="fa-solid fa-trash"></i></button>`;
+            container.appendChild(div);
+            const inputs = container.querySelectorAll('.subtask-text');
+            if (inputs.length > 0 && !text) inputs[inputs.length - 1].focus();
         }
 
         function renderTable(data) {
@@ -1406,10 +160,14 @@
             noResults.classList.add('hidden');
 
             data.forEach(item => {
+                const numId = Number(item.id);
+                const isOpen = window.openDetailRows.has(numId);
+
                 let badgeColor = item.estado === 'PENDIENTE' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200'
                     : (item.estado === 'EN DESARROLLO' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200'
+                    : (item.estado === 'DELEGADO' ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200'
                     : (item.estado === 'COMPLETADO' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200'
-                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200'));
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200')));
 
                 const lUpper = String(item.labor || "").toUpperCase();
                 let catBadge = lUpper.includes('CLASES') ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-200 border-blue-300'
@@ -1425,14 +183,14 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-darkBorder';
                 tr.innerHTML = `
-                    <td class="py-3.5 px-4 align-top"><span onclick="inlineEditCategory(${item.id})" class="border px-2.5 py-1 rounded-full text-xs font-bold ${catBadge} cursor-pointer inline-block">${item.labor}</span></td>
+                    <td class="py-3.5 px-4 align-top"><span onclick="inlineEditCategory(${numId})" class="border px-2.5 py-1 rounded-full text-xs font-bold ${catBadge} cursor-pointer inline-block">${item.labor}</span></td>
                     <td class="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 align-top">
-                        <div class="flex items-start gap-2">${tipoIcon}<span onclick="inlineEditActivityName(${item.id})" class="cursor-pointer hover:text-indigo-600 block font-medium">${item.actividad}</span></div>
-                        ${prog ? `<div class="space-y-1 pt-1 ml-5"><div class="flex justify-between text-[11px] font-semibold text-slate-500"><span>Subtareas (${prog.completed}/${prog.total})</span><span>${prog.percent}%</span></div><div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden"><div class="bg-indigo-600 h-full" style="width:${prog.percent}%"></div></div></div>` : ''}
+                        <div class="flex items-start gap-2">${tipoIcon}<span onclick="inlineEditActivityName(${numId})" class="cursor-pointer hover:text-indigo-600 block font-medium">${item.actividad}</span></div>
+                        ${prog ? `<div class="space-y-1 pt-1 ml-5"><div class="flex justify-between text-[11px] font-semibold text-slate-500"><span>Subtareas (${prog.completed}/${prog.total})</span><span>${prog.percent}%</span></div><div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden"><div class="bg-indigo-600 h-full transition-all duration-300" style="width:${prog.percent}%"></div></div></div>` : ''}
                     </td>
                     <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs align-top">
                         <div class="relative inline-flex items-center gap-1.5 group cursor-pointer">
-                            <input type="date" onchange="inlineUpdateDeadlineDate(${item.id}, this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                            <input type="date" onchange="inlineUpdateDeadlineDate(${numId}, this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                             <span class="font-medium pointer-events-none">${item.deadline} (${item.anio || 2026})</span>
                             <i class="fa-solid fa-calendar-days text-slate-400 text-[11px] pointer-events-none"></i>
                         </div><br>${horaDisplay}
@@ -1444,164 +202,105 @@
                         </div>
                     </td>
                     <td class="py-3.5 px-4 text-center align-top">
-                        <select onchange="inlineUpdateStatus(${item.id}, this.value)" class="border px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor} cursor-pointer bg-transparent">
+                        <select onchange="inlineUpdateStatus(${numId}, this.value)" class="border px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor} cursor-pointer bg-transparent">
                             <option value="PENDIENTE" ${item.estado === 'PENDIENTE' ? 'selected' : ''} class="bg-white dark:bg-darkCard text-slate-800 dark:text-slate-100">PENDIENTE</option>
                             <option value="EN DESARROLLO" ${item.estado === 'EN DESARROLLO' ? 'selected' : ''} class="bg-white dark:bg-darkCard text-slate-800 dark:text-slate-100">EN DESARROLLO</option>
+                            <option value="DELEGADO" ${item.estado === 'DELEGADO' ? 'selected' : ''} class="bg-white dark:bg-darkCard text-slate-800 dark:text-slate-100">DELEGADO</option>
                             <option value="COMPLETADO" ${item.estado === 'COMPLETADO' ? 'selected' : ''} class="bg-white dark:bg-darkCard text-slate-800 dark:text-slate-100">COMPLETADO</option>
                             <option value="ATRASADO" ${item.estado === 'ATRASADO' ? 'selected' : ''} class="bg-white dark:bg-darkCard text-slate-800 dark:text-slate-100">ATRASADO</option>
                         </select>
                     </td>
-                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs align-top"><span onclick="inlineEditResponsible(${item.id})" class="cursor-pointer hover:text-indigo-600">${item.responsable}</span></td>
+                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400 text-xs align-top"><span onclick="inlineEditResponsible(${numId})" class="cursor-pointer hover:text-indigo-600">${item.responsable}</span></td>
                     <td class="py-3.5 px-4 text-center align-top">
-                        <button onclick="toggleDetailRow(${item.id})" class="text-xs font-semibold px-2.5 py-1 rounded-lg border flex items-center justify-center gap-1.5 mx-auto bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            <i class="fa-solid fa-list-check"></i><span>Detalles</span>
+                        <button onclick="toggleDetailRow(${numId})" class="text-xs font-semibold px-2.5 py-1 rounded-lg border flex items-center justify-center gap-1.5 mx-auto ${isOpen ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}">
+                            <i class="fa-solid fa-list-check"></i><span>${isOpen ? 'Ocultar' : 'Detalles'}</span>
                         </button>
                     </td>
                     <td class="py-3.5 px-4 text-center space-x-2 align-top">
-                        <button onclick="editActivity(${item.id})" class="text-slate-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button onclick="deleteActivity(${item.id})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="editActivity(${numId})" class="text-slate-400 hover:text-indigo-600 p-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteActivity(${numId})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
                     </td>`;
                 tbody.appendChild(tr);
 
                 const detailTr = document.createElement('tr');
-                detailTr.id = `detail-row-${item.id}`;
-                detailTr.className = 'hidden bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-darkBorder';
+                detailTr.id = `detail-row-${numId}`;
+                detailTr.className = `${isOpen ? '' : 'hidden '}bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-darkBorder`;
                 detailTr.innerHTML = `
                     <td colspan="8" class="p-4">
-                        <div class="max-w-2xl mx-auto bg-white dark:bg-darkCard p-4 rounded-xl border border-slate-200 dark:border-darkBorder space-y-4">
-                            <div class="flex items-center justify-between border-b pb-2">
+                        <div class="max-w-2xl mx-auto bg-white dark:bg-darkCard p-4 rounded-xl border border-slate-200 dark:border-darkBorder space-y-4 shadow-sm">
+                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkBorder pb-2">
                                 <span class="text-xs font-bold uppercase text-indigo-700 dark:text-indigo-300">Detalles y Subtareas: ${item.actividad}</span>
-                                <button onclick="toggleDetailRow(${item.id})" class="text-slate-400 hover:text-slate-600 text-xs"><i class="fa-solid fa-xmark"></i> Cerrar</button>
+                                <button onclick="toggleDetailRow(${numId})" class="text-slate-400 hover:text-slate-600 text-xs"><i class="fa-solid fa-xmark"></i> Cerrar</button>
                             </div>
                             <div class="space-y-2">
                                 <div class="space-y-1.5 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl">
                                     ${item.subtasks && item.subtasks.length > 0 ? item.subtasks.map((st, sIdx) => `
                                         <div class="flex items-center justify-between gap-2 text-xs">
                                             <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${item.id}, ${sIdx})" class="rounded text-indigo-600 h-4 w-4">
+                                                <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask(${numId}, ${sIdx})" class="rounded text-indigo-600 h-4 w-4">
                                                 <span class="${st.completed ? 'line-through text-slate-400' : ''}">${st.text}</span>
                                             </label>
-                                            <button onclick="removeSubtaskInline(${item.id}, ${sIdx})" class="text-slate-400 hover:text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button>
-                                        </div>`).join('') : '<p class="text-xs text-slate-400 italic">No hay subtareas.</p>'}
+                                            <button onclick="removeSubtaskInline(${numId}, ${sIdx})" class="text-slate-400 hover:text-rose-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                                        </div>`).join('') : '<p class="text-xs text-slate-400 italic">No hay subtareas registradas.</p>'}
                                 </div>
                                 <div class="flex gap-2">
-                                    <input type="text" id="new-subtask-input-${item.id}" placeholder="Nueva subtarea..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-lg px-3 py-1.5 text-xs">
-                                    <button onclick="addSubtaskInline(${item.id})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs">Añadir</button>
+                                    <input type="text" id="new-subtask-input-${numId}" onkeydown="if(event.key==='Enter'){event.preventDefault(); addSubtaskInline(${numId});}" placeholder="Escribe una subtarea y presiona Enter..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                    <button type="button" onclick="addSubtaskInline(${numId})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Añadir</button>
                                 </div>
                             </div>
                             <div class="space-y-1.5">
-                                <textarea id="comment-input-${item.id}" rows="2" placeholder="Comentarios..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm">${item.comentarios || ''}</textarea>
+                                <textarea id="comment-input-${numId}" rows="2" placeholder="Comentarios o notas adicionales..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 text-sm">${item.comentarios || ''}</textarea>
                             </div>
-                            <div class="flex justify-end"><button onclick="saveDetails(${item.id})" class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Guardar Cambios</button></div>
+                            <div class="flex justify-end"><button type="button" onclick="saveDetails(${numId})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium">Guardar Notas</button></div>
                         </div>
                     </td>`;
                 tbody.appendChild(detailTr);
             });
         }
 
-        function toggleDetailRow(id) {
-            const row = document.getElementById(`detail-row-${id}`);
-            if (row) row.classList.toggle('hidden');
-        }
-
-        function addSubtaskInline(activityId) {
-            const input = document.getElementById(`new-subtask-input-${activityId}`);
-            const text = input.value.trim();
-            if (!text) return;
-            const act = activities.find(a => a.id == activityId);
-            if (act) {
-                if (!act.subtasks) act.subtasks = [];
-                act.subtasks.push({ text, completed: false });
-                saveToCloud(); renderDashboard(); toggleDetailRow(activityId); showToast("Subtarea añadida");
-            }
-        }
-
-        function removeSubtaskInline(activityId, sIdx) {
-            const act = activities.find(a => a.id == activityId);
-            if (act && act.subtasks) {
-                act.subtasks.splice(sIdx, 1);
-                saveToCloud(); renderDashboard(); toggleDetailRow(activityId); showToast("Subtarea eliminada");
-            }
-        }
-
-        function saveDetails(id) {
-            const act = activities.find(a => a.id == id);
-            if (act) {
-                act.comentarios = document.getElementById(`comment-input-${id}`).value.trim();
-                saveToCloud(); filterActivities(); showToast("Detalles guardados");
-            }
-        }
-
-        function inlineUpdateStatus(id, newStatus) {
-            const act = activities.find(a => a.id == id);
-            if (act) {
-                act.estado = newStatus;
-                act.manualStatus = true;
-                saveToCloud(); renderDashboard();
-                showToast(`Estado actualizado a ${newStatus}`);
-            }
-        }
-
-        function inlineEditCategory(id) {
-            const act = activities.find(a => a.id == id);
-            if (!act) return;
-            const newCat = prompt("Editar Categoría:", act.labor);
-            if (newCat && newCat.trim()) {
-                act.labor = newCat.trim().toUpperCase();
-                saveToCloud(); populateFilters(); renderDashboard(); showToast("Categoría actualizada");
-            }
-        }
-
-        function inlineEditActivityName(id) {
-            const act = activities.find(a => a.id == id);
-            if (!act) return;
-            const newName = prompt("Editar Actividad:", act.actividad);
-            if (newName && newName.trim()) {
-                act.actividad = newName.trim();
-                saveToCloud(); renderDashboard(); showToast("Actividad actualizada");
-            }
-        }
-
-        function inlineEditResponsible(id) {
-            const act = activities.find(a => a.id == id);
-            if (!act) return;
-            const newResp = prompt("Editar Responsable:", act.responsable);
-            if (newResp && newResp.trim()) {
-                act.responsable = newResp.trim();
-                saveToCloud(); renderDashboard(); showToast("Responsable actualizado");
-            }
-        }
-
-        function inlineUpdateDeadlineDate(id, dateValue) {
-            if (!dateValue) return;
-            const act = activities.find(a => a.id == id);
-            if (!act) return;
-            const [yearStr, monthStr, dayStr] = dateValue.split('-');
-            const year = parseInt(yearStr);
-            const monthIdx = parseInt(monthStr) - 1;
-            const day = parseInt(dayStr);
-            const monthsShortEsp = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            let deadlineDisplay = `${day}-${monthsShortEsp[monthIdx]}${year === 2027 ? '-2027' : ''}`;
-            act.deadline = deadlineDisplay;
-            act.anio = year;
-            act.mes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][monthIdx] || 'Octubre';
-            act.semana = calculateWeekFromDeadline(deadlineDisplay);
-            saveToCloud(); renderDashboard(); showToast("Fecha actualizada");
-        }
-
         function openCategoryViewer() {
             const container = document.getElementById('category-stats-container');
             container.innerHTML = '';
+
+            // Contenedor superior para los 2 gráficos de torta
+            let chartsWrapper = document.getElementById('category-charts-wrapper');
+            if (!chartsWrapper) {
+                chartsWrapper = document.createElement('div');
+                chartsWrapper.id = 'category-charts-wrapper';
+                chartsWrapper.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+                container.parentElement.insertBefore(chartsWrapper, container);
+            }
+            chartsWrapper.innerHTML = `
+                <div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col items-center">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Realizadas vs. Por Realizar</h4>
+                    <div class="w-48 h-48 relative"><canvas id="chart-status-pie"></canvas></div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col items-center">
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Actividades por Categoría</h4>
+                    <div class="w-48 h-48 relative"><canvas id="chart-category-pie"></canvas></div>
+                </div>`;
+
             const stats = {};
+            let totalCompletadas = 0;
+            let totalPorRealizar = 0;
+
             activities.forEach(a => {
                 let catName = a.labor || "SIN CATEGORÍA";
-                if (!stats[catName]) stats[catName] = { total: 0, completadas: 0, pendientes: 0, atrasadas: 0 };
+                if (!stats[catName]) stats[catName] = { total: 0, completadas: 0, pendientes: 0, delegadas: 0, atrasadas: 0 };
                 stats[catName].total++;
-                if (a.estado === 'COMPLETADO') stats[catName].completadas++;
-                else if (a.estado === 'ATRASADO') stats[catName].atrasadas++;
-                else stats[catName].pendientes++;
+                if (a.estado === 'COMPLETADO') {
+                    stats[catName].completadas++;
+                    totalCompletadas++;
+                } else {
+                    totalPorRealizar++;
+                    if (a.estado === 'ATRASADO') stats[catName].atrasadas++;
+                    else if (a.estado === 'DELEGADO') stats[catName].delegadas++;
+                    else stats[catName].pendientes++;
+                }
             });
-            Object.keys(stats).sort().forEach(cat => {
+
+            const sortedCats = Object.keys(stats).sort();
+            sortedCats.forEach(cat => {
                 const d = stats[cat];
                 const pct = d.total === 0 ? 0 : Math.round((d.completadas / d.total) * 100);
                 container.innerHTML += `
@@ -1611,149 +310,54 @@
                             <span class="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">${pct}% Listo</span>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-3"><div class="bg-indigo-600 h-full" style="width:${pct}%"></div></div>
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500">
-                            <span>Completadas: ${d.completadas}</span><span>Activas: ${d.pendientes}</span><span>Atrasadas: ${d.atrasadas}</span><span>Total: ${d.total}</span>
+                        <div class="flex flex-wrap justify-between gap-1 text-[10px] font-bold text-slate-500">
+                            <span class="text-emerald-600 dark:text-emerald-400">Listas: ${d.completadas}</span>
+                            <span class="text-amber-600 dark:text-amber-400">Activas: ${d.pendientes}</span>
+                            <span class="text-purple-600 dark:text-purple-400">Delegadas: ${d.delegadas}</span>
+                            <span class="text-rose-600 dark:text-rose-400">Atrasadas: ${d.atrasadas}</span>
+                            <span>Total: ${d.total}</span>
                         </div>
                     </div>`;
             });
+
             document.getElementById('category-modal').classList.remove('hidden');
-        }
 
-        function closeCategoryViewer() { document.getElementById('category-modal').classList.add('hidden'); }
+            // Renderizar gráficos de torta con Chart.js
+            if (typeof Chart !== 'undefined') {
+                window.categoryChartInstances.forEach(c => c.destroy());
+                window.categoryChartInstances = [];
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#cbd5e1' : '#334155';
 
-        function addSubtaskInputInModal(text = '', completed = false) {
-            const container = document.getElementById('form-subtasks-container');
-            const div = document.createElement('div');
-            div.className = 'flex items-center gap-2 modal-subtask-item';
-            div.innerHTML = `
-                <input type="checkbox" ${completed ? 'checked' : ''} class="rounded text-indigo-600 h-4 w-4 subtask-check">
-                <input type="text" value="${text}" placeholder="Subtarea..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-darkBorder rounded-lg px-3 py-1.5 text-xs subtask-text">
-                <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-rose-500 px-1 text-xs"><i class="fa-solid fa-trash"></i></button>`;
-            container.appendChild(div);
-        }
+                const ctxStatus = document.getElementById('chart-status-pie').getContext('2d');
+                window.categoryChartInstances.push(new Chart(ctxStatus, {
+                    type: 'pie',
+                    data: {
+                        labels: [`Realizadas (${totalCompletadas})`, `Por Realizar (${totalPorRealizar})`],
+                        datasets: [{
+                            data: [totalCompletadas, totalPorRealizar],
+                            backgroundColor: ['#10b981', '#f59e0b'],
+                            borderWidth: 2,
+                            borderColor: isDark ? '#1e293b' : '#ffffff'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 10 } } } } }
+                }));
 
-        function openModal(id = null) {
-            document.getElementById('activity-modal').classList.remove('hidden');
-            document.getElementById('form-subtasks-container').innerHTML = '';
-            if (id) {
-                document.getElementById('modal-title').textContent = "Editar Actividad";
-                const act = activities.find(a => a.id == id);
-                if (!act) return;
-                document.getElementById('activity-id').value = act.id;
-                document.getElementById('form-labor').value = act.labor || '';
-                document.getElementById('form-actividad').value = act.actividad || '';
-                document.getElementById('form-deadline').value = act.deadline || '';
-                document.getElementById('form-hora').value = act.hora || '';
-                document.getElementById('form-tipo').value = act.tipo || 'TAREA';
-                document.getElementById('form-comentarios').value = act.comentarios || '';
-                if (act.subtasks) act.subtasks.forEach(st => addSubtaskInputInModal(st.text, st.completed));
-                const dObj = parseActivityDate(act);
-                document.getElementById('form-deadline-date').value = `${dObj.getFullYear()}-${String(dObj.getMonth()+1).padStart(2,'0')}-${String(dObj.getDate()).padStart(2,'0')}`;
-                document.getElementById('form-semana').value = act.semana || 1;
-                document.getElementById('form-estado').value = act.estado || 'PENDIENTE';
-                document.getElementById('form-responsable').value = act.responsable || 'Carlos';
-            } else {
-                document.getElementById('modal-title').textContent = "Nueva Actividad";
-                document.getElementById('activity-form').reset();
-                document.getElementById('activity-id').value = '';
-                document.getElementById('form-tipo').value = 'TAREA';
+                const palette = ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#06b6d4', '#eab308', '#f43f5e'];
+                const ctxCat = document.getElementById('chart-category-pie').getContext('2d');
+                window.categoryChartInstances.push(new Chart(ctxCat, {
+                    type: 'pie',
+                    data: {
+                        labels: sortedCats.map(c => `${c} (${stats[c].total})`),
+                        datasets: [{
+                            data: sortedCats.map(c => stats[c].total),
+                            backgroundColor: sortedCats.map((_, i) => palette[i % palette.length]),
+                            borderWidth: 2,
+                            borderColor: isDark ? '#1e293b' : '#ffffff'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 9 } } } } }
+                }));
             }
         }
-
-        function closeModal() { document.getElementById('activity-modal').classList.add('hidden'); }
-
-        function saveActivity(event) {
-            event.preventDefault();
-            const id = document.getElementById('activity-id').value;
-            const labor = document.getElementById('form-labor').value.trim().toUpperCase();
-            const actividad = document.getElementById('form-actividad').value.trim();
-            const hora = document.getElementById('form-hora').value;
-            const tipo = document.getElementById('form-tipo').value;
-            const dateVal = document.getElementById('form-deadline-date').value;
-            if (dateVal) handleDeadlineDateChange(dateVal);
-            const deadline = document.getElementById('form-deadline').value.trim();
-            const comentarios = document.getElementById('form-comentarios').value.trim();
-            const semana = parseInt(document.getElementById('form-semana').value) || calculateWeekFromDeadline(deadline);
-            let estado = document.getElementById('form-estado').value;
-            const responsable = document.getElementById('form-responsable').value.trim();
-
-            const subtasks = [];
-            document.querySelectorAll('.modal-subtask-item').forEach(row => {
-                const text = row.querySelector('.subtask-text').value.trim();
-                const completed = row.querySelector('.subtask-check').checked;
-                if (text) subtasks.push({ text, completed });
-            });
-            if (subtasks.length > 0 && subtasks.every(st => st.completed)) estado = 'COMPLETADO';
-
-            const dObj = parseActivityDate({ deadline });
-            const mes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][dObj.getMonth()] || 'Octubre';
-            const anio = dObj.getFullYear();
-
-            if (id) {
-                const idx = activities.findIndex(a => a.id == id);
-                if (idx !== -1) {
-                    activities[idx] = { ...activities[idx], labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks, manualStatus: true };
-                }
-            } else {
-                const newId = activities.length > 0 ? Math.max(...activities.map(a => Number(a.id) || 0)) + 1 : 1;
-                activities.push({ id: newId, labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks, manualStatus: true });
-            }
-            saveToCloud(); closeModal(); populateFilters(); renderDashboard();
-            showToast("Actividad guardada con éxito");
-        }
-
-        function editActivity(id) { openModal(id); }
-
-        function deleteActivity(id) {
-            if (confirm("¿Eliminar esta actividad?")) {
-                activities = activities.filter(a => a.id != id);
-                saveToCloud(); populateFilters(); renderDashboard(); showToast("Actividad eliminada", "rose");
-            }
-        }
-
-        function openPomodoroModal() { document.getElementById('pomodoro-modal').classList.remove('hidden'); }
-        function closePomodoroModal() { document.getElementById('pomodoro-modal').classList.add('hidden'); pausePomodoro(); }
-
-        function setPomodoroMode(mode) {
-            pomoMode = mode; pausePomodoro();
-            ['work', 'shortBreak', 'longBreak'].forEach(m => {
-                const btn = document.getElementById(`pomo-btn-${m === 'work' ? 'work' : m === 'shortBreak' ? 'short' : 'long'}`);
-                btn.className = (m === mode) ? "px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white shadow-sm" : "px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
-            });
-            pomoTimeLeft = mode === 'work' ? 25 * 60 : (mode === 'shortBreak' ? 5 * 60 : 15 * 60);
-            updatePomodoroDisplay();
-        }
-
-        function updatePomodoroDisplay() {
-            const m = Math.floor(pomoTimeLeft / 60);
-            const s = pomoTimeLeft % 60;
-            document.getElementById('pomo-timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        }
-
-        function startPomodoro() {
-            if (pomoRunning) return;
-            pomoRunning = true;
-            document.getElementById('pomo-start-btn').innerHTML = '<i class="fa-solid fa-play"></i> En curso...';
-            pomoInterval = setInterval(() => {
-                if (pomoTimeLeft > 0) { pomoTimeLeft--; updatePomodoroDisplay(); }
-                else { pausePomodoro(); showToast("¡Tiempo Pomodoro finalizado!", "emerald"); }
-            }, 1000);
-        }
-
-        function pausePomodoro() {
-            pomoRunning = false; clearInterval(pomoInterval);
-            document.getElementById('pomo-start-btn').innerHTML = '<i class="fa-solid fa-play"></i> Iniciar';
-        }
-
-        function resetPomodoro() { pausePomodoro(); setPomodoroMode(pomoMode); }
-
-        function showToast(msg, type = "emerald") {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').textContent = msg;
-            document.getElementById('toast-icon').className = type === "rose" ? "fa-solid fa-circle-exclamation text-rose-400" : (type === "indigo" ? "fa-solid fa-calendar-star text-indigo-400" : "fa-solid fa-circle-check text-emerald-400");
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-        }
-    </script>
-</body>
-</html>
