@@ -6,6 +6,7 @@
     <title>Gestor de Actividades - Carlos</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><path fill=%22%234f46e5%22 d=%22M152 64H360c22.1 0 40 17.9 40 40V408c0 22.1-17.9 40-40 40H152c-22.1 0-40-17.9-40-40V104c0-22.1 17.9-40 40-40zM48 160H80V352H48c-26.5 0-48-21.5-48-48V208c0-26.5 21.5-48 48-48zm416 0h32c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H464V160z%22/></svg>">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,6 +23,7 @@
         }
     </script>
     
+    <!-- Iconos, Fuentes y Librería para Exportar a Excel -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -94,6 +96,7 @@
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-6 flex-grow w-full space-y-6">
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Widget de Próximo Vencimiento (Solo Tareas) -->
             <div id="urgent-widget" class="bg-gradient-to-br from-amber-500/10 via-rose-500/15 to-indigo-500/10 dark:from-amber-950/40 dark:via-rose-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-amber-300/70 dark:border-amber-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-amber-500 to-rose-500 text-white p-3 rounded-2xl shadow-md flex-shrink-0 animate-pulse">
@@ -110,6 +113,7 @@
                 <div id="urgent-tasks-container" class="w-full"></div>
             </div>
 
+            <!-- Visor de Eventos -->
             <div id="events-widget" class="bg-gradient-to-br from-sky-500/10 via-blue-500/15 to-indigo-500/10 dark:from-sky-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-4 sm:p-5 rounded-2xl border border-sky-300/70 dark:border-sky-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -126,6 +130,7 @@
                 <div id="events-tasks-container" class="w-full"></div>
             </div>
 
+            <!-- Actividades Atrasadas -->
             <div id="overdue-widget" class="bg-gradient-to-br from-rose-500/10 via-rose-600/15 to-slate-500/10 dark:from-rose-950/40 dark:via-rose-900/40 dark:to-slate-950/40 p-4 sm:p-5 rounded-2xl border border-rose-300/70 dark:border-rose-700/50 shadow-md flex flex-col justify-between gap-4 transition-colors">
                 <div class="flex items-start sm:items-center space-x-3">
                     <div class="bg-gradient-to-tr from-rose-600 to-red-700 text-white p-3 rounded-2xl shadow-md flex-shrink-0">
@@ -560,54 +565,11 @@
     </div>
 
     <script>
-        const chileHolidays = {
-            '2026-01-01': 'Año Nuevo',
-            '2026-04-03': 'Viernes Santo',
-            '2026-04-04': 'Sábado Santo',
-            '2026-05-01': 'Día del Trabajador',
-            '2026-05-21': 'Glorias Navales',
-            '2026-06-21': 'Pueblos Indígenas',
-            '2026-06-29': 'San Pedro y San Pablo',
-            '2026-07-16': 'Virgen del Carmen',
-            '2026-08-15': 'Asunción de la Virgen',
-            '2026-09-18': 'Independencia Nacional',
-            '2026-09-19': 'Glorias del Ejército',
-            '2026-10-12': 'Encuentro de Dos Mundos',
-            '2026-10-31': 'Iglesias Evangélicas',
-            '2026-11-01': 'Día de Todos los Santos',
-            '2026-12-08': 'Inmaculada Concepción',
-            '2026-12-25': 'Navidad',
-            '2027-01-01': 'Año Nuevo',
-            '2027-03-26': 'Viernes Santo',
-            '2027-05-01': 'Día del Trabajador',
-            '2027-05-21': 'Glorias Navales',
-            '2027-06-21': 'Pueblos Indígenas',
-            '2027-06-28': 'San Pedro y San Pablo',
-            '2027-07-16': 'Virgen del Carmen',
-            '2027-08-15': 'Asunción de la Virgen',
-            '2027-09-18': 'Independencia Nacional',
-            '2027-09-19': 'Glorias del Ejército',
-            '2027-10-11': 'Encuentro de Dos Mundos',
-            '2027-10-31': 'Iglesias Evangélicas',
-            '2027-11-01': 'Día de Todos los Santos',
-            '2027-12-08': 'Inmaculada Concepción',
-            '2027-12-25': 'Navidad'
-        };
+        let db, docRef, onSnapshot, setDoc;
 
-        let defaultActivities = [
-            { id: 1, labor: "CLASES", actividad: "ENTREGA 2 - MODULO II", deadline: "16-Oct", semana: 42, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] },
-            { id: 2, labor: "CLASES", actividad: "INFORME FINAL - TRABAJO DE TÍTULO II", deadline: "26-Oct", semana: 44, estado: "PENDIENTE", responsable: "Carlos", comentarios: "", mes: "Octubre", anio: 2026, subtasks: [] }
-        ];
-
-        let defaultStickyNotes = [
-            { id: 1, text: "Revisar bibliografía de biomimética antes del viernes.", color: "bg-amber-200 text-slate-900" }
-        ];
-
-        let activities = [...defaultActivities];
-        let stickyNotes = [...defaultStickyNotes];
-
-        // Firebase
-        let db, auth, userId, setDoc, doc, deleteDoc, collection, onSnapshot, writeBatch;
+        // Tareas reducidas al mínimo para no interferir con tu JSON real
+        let activities = [];
+        let stickyNotes = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             populateFilters();
@@ -631,11 +593,7 @@
                 const firestore = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
                 
                 setDoc = firestore.setDoc;
-                doc = firestore.doc;
-                deleteDoc = firestore.deleteDoc;
-                collection = firestore.collection;
                 onSnapshot = firestore.onSnapshot;
-                writeBatch = firestore.writeBatch;
                 
                 const firebaseConfig = {
                     apiKey: "AIzaSyBbtVeGSyPhu0Y_fo45BJkZRzUEibUvuKk",
@@ -646,91 +604,51 @@
                     appId: "1:751156790806:web:a693c1a686278841395737"
                 };
                 
-                const appId = "dashboard-carolo";
                 const app = initializeApp(firebaseConfig);
                 db = firestore.getFirestore(app);
                 
-                userId = "carlos_oficial_universal"; 
+                // Documento único, invulnerable a la red
+                docRef = firestore.doc(db, "dashboard", "carlosData_oficial");
                 
-                setupRealtimeListeners(appId);
+                setupRealtimeListeners();
             } catch (e) {
                 console.warn("Iniciando en modo local (Firebase falló)", e);
-                initLocal();
             }
         }
 
-        function setupRealtimeListeners(appId) {
-            const actsRef = collection(db, 'artifacts', appId, 'users', userId, 'activities');
-            onSnapshot(actsRef, async (snapshot) => {
-                if (snapshot.empty && !window.hasMigratedActs) {
-                    window.hasMigratedActs = true;
-                    const batch = writeBatch(db);
-                    defaultActivities.forEach(act => {
-                        const dRef = doc(db, 'artifacts', appId, 'users', userId, 'activities', String(act.id));
-                        batch.set(dRef, act);
-                    });
-                    await batch.commit();
-                } else if (!snapshot.empty) {
-                    activities = [];
-                    snapshot.forEach(d => activities.push(d.data()));
-                    activities.sort((a,b) => a.id - b.id);
+        function setupRealtimeListeners() {
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.activities) activities = data.activities;
+                    if(data.stickyNotes) stickyNotes = data.stickyNotes;
+                    
                     populateFilters();
                     renderDashboard();
-                }
-            }, (error) => console.error("Error syncing activities", error));
-
-            const notesRef = collection(db, 'artifacts', appId, 'users', userId, 'stickyNotes');
-            onSnapshot(notesRef, async (snapshot) => {
-                if (snapshot.empty && !window.hasMigratedNotes) {
-                    window.hasMigratedNotes = true;
-                    const batch = writeBatch(db);
-                    defaultStickyNotes.forEach(note => {
-                        const dRef = doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(note.id));
-                        batch.set(dRef, note);
-                    });
-                    await batch.commit();
-                } else if (!snapshot.empty) {
-                    stickyNotes = [];
-                    snapshot.forEach(d => stickyNotes.push(d.data()));
-                    stickyNotes.sort((a,b) => a.id - b.id);
                     renderStickyNotes();
+                } else {
+                    saveToCloud();
                 }
-            }, (error) => console.error("Error syncing notes", error));
+            }, (error) => console.error("Error sincronizando:", error));
         }
 
-        async function saveActivityToDB(act) {
-            if (!userId || !db) return;
-            const appId = "dashboard-carolo";
-            try { await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'activities', String(act.id)), act); } 
-            catch(e) { console.error(e); }
+        async function saveToCloud() {
+            if (!db || !docRef) return;
+            try { 
+                await setDoc(docRef, { activities, stickyNotes }); 
+            } catch(e) { console.error("Error al guardar:", e); }
         }
 
-        async function deleteActivityFromDB(id) {
-            if (!userId || !db) return;
-            const appId = "dashboard-carolo";
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'activities', String(id))); } 
-            catch(e) { console.error(e); }
-        }
-
-        async function saveNoteToDB(note) {
-            if (!userId || !db) return;
-            const appId = "dashboard-carolo";
-            try { await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(note.id)), note); } 
-            catch(e) { console.error(e); }
-        }
-
-        async function deleteNoteFromDB(id) {
-            if (!userId || !db) return;
-            const appId = "dashboard-carolo";
-            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'stickyNotes', String(id))); } 
-            catch(e) { console.error(e); }
-        }
-
-        function initLocal() {
-            populateFilters();
-            renderDashboard();
-            renderStickyNotes();
-        }
+        const chileHolidays = {
+            '2026-01-01': 'Año Nuevo', '2026-04-03': 'Viernes Santo', '2026-04-04': 'Sábado Santo', '2026-05-01': 'Día del Trabajador',
+            '2026-05-21': 'Glorias Navales', '2026-06-21': 'Pueblos Indígenas', '2026-06-29': 'San Pedro y San Pablo', '2026-07-16': 'Virgen del Carmen',
+            '2026-08-15': 'Asunción de la Virgen', '2026-09-18': 'Independencia Nacional', '2026-09-19': 'Glorias del Ejército', '2026-10-12': 'Encuentro de Dos Mundos',
+            '2026-10-31': 'Iglesias Evangélicas', '2026-11-01': 'Día de Todos los Santos', '2026-12-08': 'Inmaculada Concepción', '2026-12-25': 'Navidad',
+            '2027-01-01': 'Año Nuevo', '2027-03-26': 'Viernes Santo', '2027-05-01': 'Día del Trabajador', '2027-05-21': 'Glorias Navales',
+            '2027-06-21': 'Pueblos Indígenas', '2027-06-28': 'San Pedro y San Pablo', '2027-07-16': 'Virgen del Carmen', '2027-08-15': 'Asunción de la Virgen',
+            '2027-09-18': 'Independencia Nacional', '2027-09-19': 'Glorias del Ejército', '2027-10-11': 'Encuentro de Dos Mundos', '2027-10-31': 'Iglesias Evangélicas',
+            '2027-11-01': 'Día de Todos los Santos', '2027-12-08': 'Inmaculada Concepción', '2027-12-25': 'Navidad'
+        };
 
         let currentTimelineLevel = 'months';
         let selectedMonth = null;
@@ -763,7 +681,7 @@
 
         function parseActivityDate(a) {
             try {
-                if (!a || !a.deadline) return new Date(a?.anio || 2026, 9, 1);
+                if (!a || !a.deadline || typeof a.deadline !== 'string') return new Date(a?.anio || 2026, 9, 1);
                 const monthsMapInv = {
                     'jan': 0, 'ene': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'abr': 3,
                     'may': 4, 'jun': 5, 'jul': 6, 'aug': 7, 'ago': 7,
@@ -783,6 +701,7 @@
         function checkOverdueTasks() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            let updated = false;
 
             activities.forEach(a => {
                 if (a.estado === 'PENDIENTE' || a.estado === 'EN DESARROLLO') {
@@ -790,10 +709,11 @@
                     taskDate.setHours(0, 0, 0, 0);
                     if (taskDate < today) {
                         a.estado = 'ATRASADO';
-                        saveActivityToDB(a);
+                        updated = true;
                     }
                 }
             });
+            if(updated) saveToCloud();
         }
 
         function updateHeaderDate() {
@@ -1131,6 +1051,7 @@
         }
 
         function getISOWeekNumber(date) {
+            if (isNaN(date.getTime())) return 1;
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
             d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -1710,14 +1631,11 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed.activities) {
-                        activities = parsed.activities;
-                        activities.forEach(act => saveActivityToDB(act));
-                    }
-                    if (parsed.stickyNotes) {
-                        stickyNotes = parsed.stickyNotes;
-                        stickyNotes.forEach(note => saveNoteToDB(note));
-                    }
+                    if (parsed.activities) activities = parsed.activities;
+                    if (parsed.stickyNotes) stickyNotes = parsed.stickyNotes;
+                    
+                    saveToCloud(); 
+                    
                     populateFilters();
                     renderDashboard();
                     renderStickyNotes();
@@ -1769,7 +1687,7 @@
             ];
             const newNote = { id: newId, text: "Nueva nota rápida...", color: colors[Math.floor(Math.random() * colors.length)] };
             stickyNotes.push(newNote);
-            saveNoteToDB(newNote);
+            saveToCloud();
             renderStickyNotes();
             showToast("Post-it añadido");
         }
@@ -1778,13 +1696,13 @@
             const note = stickyNotes.find(n => n.id === id);
             if (note) {
                 note.text = text;
-                saveNoteToDB(note);
+                saveToCloud();
             }
         }
 
         function deleteStickyNote(id) {
             stickyNotes = stickyNotes.filter(n => n.id !== id);
-            deleteNoteFromDB(id);
+            saveToCloud();
             renderStickyNotes();
             showToast("Nota eliminada", "rose");
         }
@@ -1800,12 +1718,12 @@
                 if (!showCompletedArchive && isCompletedPast) return false;
                 if (showCompletedArchive && !isCompletedPast) return false;
 
-                const matchSubtasks = a.subtasks && a.subtasks.some(st => (st.text || "").toLowerCase().includes(search));
-                const matchSearch = (a.actividad || "").toLowerCase().includes(search) || 
-                                    (a.responsable || "").toLowerCase().includes(search) || 
-                                    (a.labor || "").toLowerCase().includes(search) || 
-                                    (a.deadline || "").toLowerCase().includes(search) ||
-                                    (a.comentarios || "").toLowerCase().includes(search) ||
+                const matchSubtasks = a.subtasks && a.subtasks.some(st => String(st.text || "").toLowerCase().includes(search));
+                const matchSearch = String(a.actividad || "").toLowerCase().includes(search) || 
+                                    String(a.responsable || "").toLowerCase().includes(search) || 
+                                    String(a.labor || "").toLowerCase().includes(search) || 
+                                    String(a.deadline || "").toLowerCase().includes(search) ||
+                                    String(a.comentarios || "").toLowerCase().includes(search) ||
                                     matchSubtasks;
 
                 const matchLabor = selectedLabores.length === 0 || selectedLabores.includes(a.labor || "Sin Categoría");
@@ -1840,7 +1758,7 @@
                     act.estado = 'PENDIENTE';
                 }
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
             }
         }
 
@@ -2062,7 +1980,7 @@
                 input.value = '';
                 renderDashboard();
                 toggleDetailRow(activityId);
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Subtarea añadida");
             }
         }
@@ -2073,7 +1991,7 @@
                 act.subtasks.splice(subtaskIndex, 1);
                 renderDashboard();
                 toggleDetailRow(activityId);
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Subtarea eliminada");
             }
         }
@@ -2084,7 +2002,7 @@
             if (act) {
                 act.comentarios = commentText;
                 filterActivities();
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Detalles guardados con éxito");
             }
         }
@@ -2099,7 +2017,7 @@
                     showToast(`Estado actualizado a ${newStatus}`);
                 }
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
             }
         }
 
@@ -2111,7 +2029,7 @@
                 act.labor = newCat.trim().toUpperCase();
                 populateFilters();
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Categoría actualizada");
             }
         }
@@ -2123,7 +2041,7 @@
             if (newName !== null && newName.trim() !== "") {
                 act.actividad = newName.trim();
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Actividad actualizada");
             }
         }
@@ -2135,7 +2053,7 @@
             if (newResp !== null && newResp.trim() !== "") {
                 act.responsable = newResp.trim();
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Responsable actualizado");
             }
         }
@@ -2159,7 +2077,7 @@
                 act.semana = calculateWeekFromDeadline(deadlineDisplay);
 
                 renderDashboard();
-                saveActivityToDB(act);
+                saveToCloud();
                 showToast("Fecha deadline actualizada con éxito");
             } catch(e) {
                 showToast("Formato de fecha inválido", "rose");
@@ -2295,14 +2213,14 @@
                 const index = activities.findIndex(a => a.id == id);
                 if (index !== -1) {
                     activities[index] = { ...activities[index], labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks };
-                    saveActivityToDB(activities[index]);
+                    saveToCloud();
                     showToast("Actividad actualizada correctamente");
                 }
             } else {
                 const newId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
                 const newAct = { id: newId, labor, actividad, deadline, hora, tipo, semana, estado, responsable, comentarios, mes, anio, subtasks };
                 activities.push(newAct);
-                saveActivityToDB(newAct);
+                saveToCloud();
                 showToast("Actividad creada con éxito");
             }
 
@@ -2318,7 +2236,7 @@
         function deleteActivity(id) {
             if (confirm("¿Estás seguro de que deseas eliminar esta actividad?")) {
                 activities = activities.filter(a => a.id !== id);
-                deleteActivityFromDB(id);
+                saveToCloud();
                 populateFilters();
                 renderDashboard();
                 showToast("Actividad eliminada", "rose");
